@@ -2,6 +2,14 @@
 
 # Log Perubahan (Changelog)
 
+**By:** @Fii2X05
+
+- **Manager Budget Monitoring (Anggaran):** Mengembangkan layar `ManagerBudgetScreen` yang menyajikan gambaran finansial komprehensif. Menampilkan total anggaran perusahaan secara global serta distribusi alokasi anggaran yang telah disetujui per divisi lengkap dengan persentase penggunaannya melalui *progress bar*.
+- **Fund Approval & Auditing Gateway (Persetujuan Dana):** Membangun `ManagerReimbursementScreen` untuk memfasilitasi peran pengawasan manajer. Manajer kini dapat melihat daftar pengajuan dana dari staf, serta memberikan keputusan langsung berupa persetujuan (*Setujui*), penolakan (*Tolak*), maupun melakukan eskalasi untuk audit lanjutan (*Mulai Audit*).
+- **Manager Profile Standardization:** Menyempurnakan `ManagerProfileScreen` agar selaras dengan arsitektur profil staf. Dilengkapi dengan identitas peran manajerial, pengaturan keamanan berlapis (form ganti *password*), dan fitur penghentian sesi (*logout*) yang terstruktur.
+
+---
+
 ### [19 April 2026] - Enhancing UX, Dynamic APIs, and Manager Role Architecture
 
 **By:** @jevonkagenou
