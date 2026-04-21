@@ -1,104 +1,86 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../theme/colors.dart';
-import '../../theme/text_styles.dart';
-import '../auth/login_screen.dart';
+import 'manager_dashboard_screen.dart';
+import 'manager_budget_screen.dart';
+import 'manager_reimbursement_screen.dart';
+import 'manager_log_screen.dart';
+import 'manager_profile_screen.dart';
 
-class ManagerMainScreen extends StatelessWidget {
+class ManagerMainScreen extends StatefulWidget {
   const ManagerMainScreen({super.key});
 
-  void _confirmLogout(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: AppColors.surface,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: Text(
-            'Konfirmasi Keluar',
-            style: AppTextStyles.headlineSmall,
-          ),
-          content: Text(
-            'Apakah Anda yakin ingin keluar dari sesi Manager?',
-            style: AppTextStyles.bodyMedium,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              style: TextButton.styleFrom(
-                foregroundColor: AppColors.neutralLight,
-              ),
-              child: const Text('Batal'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context); // Tutup dialog
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (context) => const LoginScreen()),
-                  (route) => false,
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.danger,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: const Text('Keluar'),
-            ),
-          ],
-        );
-      },
-    );
-  }
+  @override
+  State<ManagerMainScreen> createState() => _ManagerMainScreenState();
+}
+
+class _ManagerMainScreenState extends State<ManagerMainScreen> {
+  int _currentIndex = 0;
+
+  final List<Widget> _screens = [
+    const ManagerDashboardScreen(),
+    const ManagerBudgetScreen(),
+    const ManagerReimbursementScreen(),
+    const ManagerLogScreen(),
+    const ManagerProfileScreen(),
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: Text('Manager Dashboard', style: AppTextStyles.headlineSmall),
-        backgroundColor: AppColors.surface,
-        foregroundColor: AppColors.neutral,
-        elevation: 0,
-        actions: [
-          IconButton(
-            onPressed: () => _confirmLogout(context),
-            icon: const Icon(LucideIcons.logOut, color: AppColors.danger),
-          ),
-        ],
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(LucideIcons.construction, size: 64, color: AppColors.neutralLight),
-            const SizedBox(height: 16),
-            Text(
-              'Halaman Manager',
-              style: AppTextStyles.headlineMedium,
+      body: _screens[_currentIndex],
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 20,
+              offset: const Offset(0, -5),
             ),
-            const SizedBox(height: 8),
-            Text(
-              'Akan dikembangkan selanjutnya.',
-              style: AppTextStyles.bodyMedium,
+          ],
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _currentIndex,
+          onTap: (index) {
+            setState(() {
+              _currentIndex = index;
+            });
+          },
+          backgroundColor: AppColors.surface,
+          selectedItemColor: AppColors.primary,
+          unselectedItemColor: AppColors.neutralLight,
+          showUnselectedLabels: true,
+          type: BottomNavigationBarType.fixed,
+          elevation: 0,
+          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 10),
+          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 10),
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(LucideIcons.layoutDashboard),
+              activeIcon: Icon(LucideIcons.layoutDashboard, color: AppColors.primary),
+              label: 'DASHBOARD',
             ),
-            const SizedBox(height: 32),
-            ElevatedButton.icon(
-              onPressed: () => _confirmLogout(context),
-              icon: const Icon(LucideIcons.logOut, size: 18),
-              label: const Text('Kembali ke Login'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.surface,
-                foregroundColor: AppColors.danger,
-                elevation: 0,
-                side: const BorderSide(color: AppColors.border),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
+            BottomNavigationBarItem(
+              icon: Icon(LucideIcons.wallet),
+              activeIcon: Icon(LucideIcons.wallet, color: AppColors.primary),
+              label: 'BUDGET',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(LucideIcons.fileText),
+              activeIcon: Icon(LucideIcons.fileText, color: AppColors.primary),
+              label: 'PENGAJUAN',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(LucideIcons.clipboardList),
+              activeIcon: Icon(LucideIcons.clipboardList, color: AppColors.primary),
+              label: 'LOG',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(LucideIcons.user),
+              activeIcon: Icon(LucideIcons.user, color: AppColors.primary),
+              label: 'PROFIL',
             ),
           ],
         ),
