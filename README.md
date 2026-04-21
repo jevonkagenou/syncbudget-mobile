@@ -2,6 +2,8 @@
 
 # Log Perubahan (Changelog)
 
+### [21 April 2026] - Manager Core Features: Budgeting, Approval, and Profiling
+
 **By:** @Fii2X05
 
 - **Manager Budget Monitoring (Anggaran):** Mengembangkan layar `ManagerBudgetScreen` yang menyajikan gambaran finansial komprehensif. Menampilkan total anggaran perusahaan secara global serta distribusi alokasi anggaran yang telah disetujui per divisi lengkap dengan persentase penggunaannya melalui *progress bar*.
