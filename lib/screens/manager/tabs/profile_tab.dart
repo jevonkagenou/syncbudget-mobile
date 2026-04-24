@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import '../../../theme/colors.dart';
 import '../../../theme/text_styles.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 import '../../auth/login_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../services/auth_service.dart';
@@ -125,7 +125,7 @@ class _ProfileTabState extends State<ProfileTab> {
             style: AppTextStyles.headlineSmall,
           ),
           content: Text(
-            'Apakah Anda yakin ingin keluar dari sesi saat ini?',
+            'Apakah Anda yakin ingin keluar dari sesi Manager?',
             style: AppTextStyles.bodyMedium,
           ),
           actions: [
@@ -138,7 +138,7 @@ class _ProfileTabState extends State<ProfileTab> {
             ),
             ElevatedButton(
               onPressed: () async {
-                Navigator.pop(dialogContext); // Tutup dialog
+                Navigator.pop(dialogContext);
                 
                 // Panggil API logout dan hapus data lokal
                 await AuthService.logout();
@@ -204,8 +204,8 @@ class _ProfileTabState extends State<ProfileTab> {
           ),
           
           Expanded(
-            child: _isLoading 
-                ? const Center(child: CircularProgressIndicator()) 
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
                 : SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
               padding: const EdgeInsets.symmetric(horizontal: 24.0),

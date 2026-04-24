@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../theme/colors.dart';
-import 'manager_dashboard_screen.dart';
-import 'manager_budget_screen.dart';
-import 'manager_reimbursement_screen.dart';
-import 'manager_log_screen.dart';
-import 'manager_profile_screen.dart';
+import '../../theme/text_styles.dart';
+import 'tabs/home_tab.dart';
+import 'tabs/budget_tab.dart';
+import 'tabs/pengajuan_tab.dart';
+import 'tabs/log_tab.dart';
+import 'tabs/profile_tab.dart';
+import '../../services/auth_service.dart';
+import '../auth/login_screen.dart';
 
 class ManagerMainScreen extends StatefulWidget {
   const ManagerMainScreen({super.key});
@@ -17,12 +21,29 @@ class ManagerMainScreen extends StatefulWidget {
 class _ManagerMainScreenState extends State<ManagerMainScreen> {
   int _currentIndex = 0;
 
+  @override
+  void initState() {
+    super.initState();
+    _checkAuth();
+  }
+
+  Future<void> _checkAuth() async {
+    final loggedIn = await AuthService.isLoggedIn();
+    if (!loggedIn && mounted) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+        (route) => false,
+      );
+    }
+  }
+
   final List<Widget> _screens = [
-    const ManagerDashboardScreen(),
-    const ManagerBudgetScreen(),
-    const ManagerReimbursementScreen(),
-    const ManagerLogScreen(),
-    const ManagerProfileScreen(),
+    const HomeTab(),
+    const BudgetTab(),
+    const PengajuanTab(),
+    const LogTab(),
+    const ProfileTab(),
   ];
 
   @override
@@ -35,54 +56,66 @@ class _ManagerMainScreenState extends State<ManagerMainScreen> {
           color: AppColors.surface,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 20,
-              offset: const Offset(0, -5),
-            ),
+              blurRadius: 16,
+              color: Colors.black.withValues(alpha: 0.04),
+              offset: const Offset(0, -4),
+            )
           ],
         ),
-        child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: (index) {
-            setState(() {
-              _currentIndex = index;
-            });
-          },
-          backgroundColor: AppColors.surface,
-          selectedItemColor: AppColors.primary,
-          unselectedItemColor: AppColors.neutralLight,
-          showUnselectedLabels: true,
-          type: BottomNavigationBarType.fixed,
-          elevation: 0,
-          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 10),
-          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 10),
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(LucideIcons.layoutDashboard),
-              activeIcon: Icon(LucideIcons.layoutDashboard, color: AppColors.primary),
-              label: 'DASHBOARD',
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 12),
+            child: GNav(
+              rippleColor: AppColors.primaryLight.withValues(alpha: 0.3),
+              hoverColor: AppColors.primaryLight.withValues(alpha: 0.1),
+              haptic: true,
+              tabBorderRadius: 24, 
+              tabActiveBorder: Border.all(color: Colors.transparent, width: 0), 
+              tabBorder: Border.all(color: Colors.transparent, width: 0), 
+              tabShadow: [BoxShadow(color: AppColors.primaryLight.withValues(alpha: 0.1), blurRadius: 8)],
+              curve: Curves.fastOutSlowIn,
+              duration: const Duration(milliseconds: 400),
+              gap: 6,
+              color: AppColors.neutralLight,
+              activeColor: AppColors.primary,
+              iconSize: 22,
+              tabBackgroundColor: AppColors.primaryLight.withValues(alpha: 0.8),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+              selectedIndex: _currentIndex,
+              onTabChange: (index) {
+                setState(() {
+                  _currentIndex = index;
+                });
+              },
+              tabs: [
+                GButton(
+                  icon: LucideIcons.home,
+                  text: 'Beranda',
+                  textStyle: AppTextStyles.labelMedium.copyWith(color: AppColors.primary, fontSize: 11),
+                ),
+                GButton(
+                  icon: LucideIcons.wallet,
+                  text: 'Budget',
+                  textStyle: AppTextStyles.labelMedium.copyWith(color: AppColors.primary, fontSize: 11),
+                ),
+                GButton(
+                  icon: LucideIcons.fileText,
+                  text: 'Pengajuan',
+                  textStyle: AppTextStyles.labelMedium.copyWith(color: AppColors.primary, fontSize: 11),
+                ),
+                GButton(
+                  icon: LucideIcons.clipboardList,
+                  text: 'Log',
+                  textStyle: AppTextStyles.labelMedium.copyWith(color: AppColors.primary, fontSize: 11),
+                ),
+                GButton(
+                  icon: LucideIcons.user,
+                  text: 'Profil',
+                  textStyle: AppTextStyles.labelMedium.copyWith(color: AppColors.primary, fontSize: 11),
+                ),
+              ],
             ),
-            BottomNavigationBarItem(
-              icon: Icon(LucideIcons.wallet),
-              activeIcon: Icon(LucideIcons.wallet, color: AppColors.primary),
-              label: 'BUDGET',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(LucideIcons.fileText),
-              activeIcon: Icon(LucideIcons.fileText, color: AppColors.primary),
-              label: 'PENGAJUAN',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(LucideIcons.clipboardList),
-              activeIcon: Icon(LucideIcons.clipboardList, color: AppColors.primary),
-              label: 'LOG',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(LucideIcons.user),
-              activeIcon: Icon(LucideIcons.user, color: AppColors.primary),
-              label: 'PROFIL',
-            ),
-          ],
+          ),
         ),
       ),
     );

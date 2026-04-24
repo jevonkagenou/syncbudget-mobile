@@ -4,6 +4,8 @@ import '../../theme/text_styles.dart';
 import '../staff/staff_main_screen.dart';
 import '../manager/manager_main_screen.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import '../../services/auth_service.dart';
+import '../../utils/snackbar_utils.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -16,21 +18,48 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _isLoading = false;
 
-  void _handleLogin() {
-    final email = _emailController.text.toLowerCase();
+  void _handleLogin() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
     
-    if (email.contains('manager')) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const ManagerMainScreen()),
-      );
+    if (email.isEmpty || password.isEmpty) {
+      SnackbarUtils.showModernSnackBar(context, 'Email dan password harus diisi', isError: true);
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    final result = await AuthService.login(email, password);
+
+    if (!mounted) return;
+
+    setState(() {
+      _isLoading = false;
+    });
+
+    if (result['success']) {
+      final role = result['role'];
+      
+      SnackbarUtils.showModernSnackBar(context, result['message'] ?? 'Login berhasil');
+
+      if (role == 'manager') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const ManagerMainScreen()),
+        );
+      } else {
+        // Default to staff
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const StaffMainScreen()),
+        );
+      }
     } else {
-      // Default to staff
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const StaffMainScreen()),
-      );
+      SnackbarUtils.showModernSnackBar(context, result['message'] ?? 'Login gagal', isError: true);
     }
   }
 
@@ -83,7 +112,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       _buildTextField(
                         controller: _emailController,
                         label: 'Email',
-                        hint: 'staff@syncbudget.com / manager@...',
+                        hint: 'user@syncbudget.com',
                         icon: LucideIcons.mail,
                       ),
                       const SizedBox(height: 16),
@@ -98,7 +127,68 @@ class _LoginScreenState extends State<LoginScreen> {
                       Align(
                         alignment: Alignment.centerRight,
                         child: TextButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            showModalBottomSheet(
+                              context: context,
+                              backgroundColor: Colors.transparent,
+                              builder: (context) => Container(
+                                padding: const EdgeInsets.all(24),
+                                decoration: const BoxDecoration(
+                                  color: AppColors.surface,
+                                  borderRadius: BorderRadius.only(
+                                    topLeft: Radius.circular(24),
+                                    topRight: Radius.circular(24),
+                                  ),
+                                ),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      width: 40,
+                                      height: 4,
+                                      margin: const EdgeInsets.only(bottom: 24),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.border,
+                                        borderRadius: BorderRadius.circular(2),
+                                      ),
+                                    ),
+                                    Container(
+                                      padding: const EdgeInsets.all(16),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.warningLight.withOpacity(0.5),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(LucideIcons.alertTriangle, size: 32, color: AppColors.warning),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      'Lupa Password?',
+                                      style: AppTextStyles.headlineSmall,
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      'Demi keamanan data finansial perusahaan, Anda tidak dapat melakukan reset kata sandi secara mandiri. \n\nSilakan hubungi Administrator (Admin) atau Tim HR/IT untuk meminta pembaruan kata sandi akun Anda.',
+                                      textAlign: TextAlign.center,
+                                      style: AppTextStyles.bodyMedium.copyWith(color: AppColors.neutralLight, height: 1.5),
+                                    ),
+                                    const SizedBox(height: 24),
+                                    ElevatedButton(
+                                      onPressed: () => Navigator.pop(context),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: AppColors.primary,
+                                        foregroundColor: Colors.white,
+                                        minimumSize: const Size(double.infinity, 50),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                        elevation: 0,
+                                      ),
+                                      child: const Text('Saya Mengerti'),
+                                    ),
+                                    const SizedBox(height: 16),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
                           child: Text(
                             'Lupa Password?',
                             style: AppTextStyles.labelMedium.copyWith(
@@ -109,7 +199,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 24),
                       ElevatedButton(
-                        onPressed: _handleLogin,
+                        onPressed: _isLoading ? null : _handleLogin,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
                           foregroundColor: Colors.white,
@@ -120,12 +210,21 @@ class _LoginScreenState extends State<LoginScreen> {
                           minimumSize: const Size(double.infinity, 0),
                           elevation: 0,
                         ),
-                        child: Text(
-                          'Masuk',
-                          style: AppTextStyles.labelLarge.copyWith(
-                            color: Colors.white,
-                          ),
-                        ),
+                        child: _isLoading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : Text(
+                                'Masuk',
+                                style: AppTextStyles.labelLarge.copyWith(
+                                  color: Colors.white,
+                                ),
+                              ),
                       ),
                     ],
                   ),

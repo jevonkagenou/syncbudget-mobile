@@ -6,6 +6,8 @@ import '../../theme/text_styles.dart';
 import 'tabs/home_tab.dart';
 import 'tabs/pengajuan_tab.dart';
 import 'tabs/profile_tab.dart';
+import '../../services/auth_service.dart';
+import '../auth/login_screen.dart';
 
 class StaffMainScreen extends StatefulWidget {
   const StaffMainScreen({super.key});
@@ -16,6 +18,23 @@ class StaffMainScreen extends StatefulWidget {
 
 class _StaffMainScreenState extends State<StaffMainScreen> {
   int _currentIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAuth();
+  }
+
+  Future<void> _checkAuth() async {
+    final loggedIn = await AuthService.isLoggedIn();
+    if (!loggedIn && mounted) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+        (route) => false,
+      );
+    }
+  }
 
   void _changeTab(int index) {
     setState(() {
