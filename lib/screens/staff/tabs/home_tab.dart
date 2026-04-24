@@ -3,6 +3,8 @@ import 'package:intl/intl.dart';
 import '../../../theme/colors.dart';
 import '../../../theme/text_styles.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import '../../../services/dashboard_service.dart';
+import '../../../utils/snackbar_utils.dart';
 
 class HomeTab extends StatefulWidget {
   final VoidCallback? onNavigateToPengajuan;
@@ -13,51 +15,114 @@ class HomeTab extends StatefulWidget {
 }
 
 class _HomeTabState extends State<HomeTab> {
-  // Dummy Data - Siap diganti dengan API (Dinamic)
-  final String userName = "Klein";
-  final String userRole = "STAF OPERASIONAL";
+  bool _isLoading = true;
   
-  final int totalPengajuanMenunggu = 2;
-  final int totalDanaDisetujui = 1500000;
+  String userName = "";
+  String userRole = "";
+  String namaDivisi = "";
+  String tahunAnggaran = "";
   
-  final String namaDivisi = "Divisi Operasional";
-  final String tahunAnggaran = "2024";
-  final int sisaAnggaran = 76000000;
-  final int totalAnggaran = 250000000;
+  int totalPengajuanMenunggu = 0;
+  int totalDanaDisetujui = 0;
   
+  int sisaAnggaran = 0;
+  int totalAnggaran = 0;
+  
+  List<Map<String, dynamic>> riwayatPengajuan = [];
+
   // Getter untuk kalkulasi value progress bar
   double get progressAnggaran {
+    if (totalAnggaran == 0) return 0;
     int digunakan = totalAnggaran - sisaAnggaran;
     return digunakan / totalAnggaran;
   }
 
-  // List data riwayat pengajuan (siap di mapping dari API)
-  final List<Map<String, dynamic>> riwayatPengajuan = [
-    {
-      "title": "Biaya Transportasi Luar Kota",
-      "date": "12 Okt 2023",
-      "amount": 450000,
-      "status": "PENDING",
-      "statusColor": AppColors.warning,
-      "icon": LucideIcons.bus,
-    },
-    {
-      "title": "Pembelian ATK Kantor",
-      "date": "08 Okt 2023",
-      "amount": 1050000,
-      "status": "DISETUJUI",
-      "statusColor": AppColors.success,
-      "icon": LucideIcons.briefcase,
-    },
-    {
-      "title": "Reimbursement Internet",
-      "date": "05 Okt 2023",
-      "amount": 150000,
-      "status": "PENDING",
-      "statusColor": AppColors.warning,
-      "icon": LucideIcons.wifi,
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadDashboardData();
+  }
+
+  Future<void> _loadDashboardData() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    final result = await DashboardService.getDashboardData();
+
+    if (!mounted) return;
+
+    if (result['success']) {
+      final data = result['data'];
+      
+      // Parse Profile
+      userName = data['profile']['name'] ?? 'User';
+      userRole = (data['profile']['role'] ?? '').toString().toUpperCase();
+      namaDivisi = data['profile']['division'] ?? '';
+      
+      // Parse Budget Info
+      tahunAnggaran = data['fiscal_year'] ?? '';
+      totalAnggaran = double.parse(data['budget']['total_amount'].toString()).round();
+      sisaAnggaran = double.parse(data['budget']['remaining_amount'].toString()).round();
+
+      // Parse Recent History
+      int pendingCount = 0;
+      int approvedSum = 0;
+      List<Map<String, dynamic>> mappedHistory = [];
+
+      if (data['recent_history'] != null) {
+        for (var item in data['recent_history']) {
+          String statusStr = item['status'] ?? 'pending';
+          
+          if (statusStr == 'pending') {
+            pendingCount++;
+          } else if (statusStr == 'approved') {
+            approvedSum += double.parse(item['amount'].toString()).round();
+          }
+
+          // Map for UI
+          String formattedStatus = 'PENDING';
+          Color statusColor = AppColors.warning;
+          IconData icon = LucideIcons.fileText;
+
+          if (statusStr == 'approved') {
+            formattedStatus = 'DISETUJUI';
+            statusColor = AppColors.success;
+            icon = LucideIcons.checkCircle;
+          } else if (statusStr == 'rejected') {
+            formattedStatus = 'DITOLAK';
+            statusColor = AppColors.danger;
+            icon = LucideIcons.xCircle;
+          }
+
+          // Format date assuming YYYY-MM-DD format roughly
+          String dateStr = item['created_at'] != null 
+              ? DateFormat('dd MMM yyyy').format(DateTime.parse(item['created_at']))
+              : '';
+
+          mappedHistory.add({
+            "title": item['title'] ?? 'Pengajuan',
+            "date": dateStr,
+            "amount": double.parse(item['amount'].toString()).round(),
+            "status": formattedStatus,
+            "statusColor": statusColor,
+            "icon": icon,
+          });
+        }
+      }
+
+      totalPengajuanMenunggu = pendingCount;
+      totalDanaDisetujui = approvedSum;
+      riwayatPengajuan = mappedHistory;
+
+    } else {
+      SnackbarUtils.showModernSnackBar(context, result['message'], isError: true);
+    }
+
+    setState(() {
+      _isLoading = false;
+    });
+  }
 
   String _formatCurrency(int amount) {
     return NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(amount);
@@ -66,12 +131,18 @@ class _HomeTabState extends State<HomeTab> {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      child: _isLoading 
+        ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+        : RefreshIndicator(
+            onRefresh: _loadDashboardData,
+            color: AppColors.primary,
+            backgroundColor: AppColors.surface,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
             // Header
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -224,21 +295,32 @@ class _HomeTabState extends State<HomeTab> {
             const SizedBox(height: 16),
             
             // Loop data riwayat dengan map
-            ...riwayatPengajuan.map((item) {
-              return _buildHistoryItem(
-                title: item['title'],
-                date: item['date'],
-                amount: _formatCurrency(item['amount']),
-                status: item['status'],
-                statusColor: item['statusColor'],
-                icon: item['icon'],
-              );
-            }).toList(),
+            if (riwayatPengajuan.isEmpty)
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 32),
+                alignment: Alignment.center,
+                child: Text(
+                  'Belum ada riwayat pengajuan.',
+                  style: AppTextStyles.bodyMedium.copyWith(color: AppColors.neutralLight),
+                ),
+              )
+            else
+              ...riwayatPengajuan.map((item) {
+                return _buildHistoryItem(
+                  title: item['title'],
+                  date: item['date'],
+                  amount: _formatCurrency(item['amount']),
+                  status: item['status'],
+                  statusColor: item['statusColor'],
+                  icon: item['icon'],
+                );
+              }),
             
             const SizedBox(height: 24),
-          ],
-        ),
-      ),
+                ],
+              ),
+            ),
+          ),
     );
   }
 
