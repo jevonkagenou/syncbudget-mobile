@@ -83,16 +83,13 @@ class _HomeTabState extends State<HomeTab> {
           // Map for UI
           String formattedStatus = 'PENDING';
           Color statusColor = AppColors.warning;
-          IconData icon = LucideIcons.fileText;
 
           if (statusStr == 'approved') {
             formattedStatus = 'DISETUJUI';
             statusColor = AppColors.success;
-            icon = LucideIcons.checkCircle;
           } else if (statusStr == 'rejected') {
             formattedStatus = 'DITOLAK';
             statusColor = AppColors.danger;
-            icon = LucideIcons.xCircle;
           }
 
           // Format date assuming YYYY-MM-DD format roughly
@@ -106,7 +103,6 @@ class _HomeTabState extends State<HomeTab> {
             "amount": double.parse(item['amount'].toString()).round(),
             "status": formattedStatus,
             "statusColor": statusColor,
-            "icon": icon,
           });
         }
       }
@@ -312,7 +308,6 @@ class _HomeTabState extends State<HomeTab> {
                   amount: _formatCurrency(item['amount']),
                   status: item['status'],
                   statusColor: item['statusColor'],
-                  icon: item['icon'],
                 );
               }),
             
@@ -371,7 +366,6 @@ class _HomeTabState extends State<HomeTab> {
     required String amount,
     required String status,
     required Color statusColor,
-    required IconData icon,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -391,10 +385,10 @@ class _HomeTabState extends State<HomeTab> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.background,
+              color: statusColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: AppColors.neutral, size: 20),
+            child: Icon(LucideIcons.fileText, color: statusColor, size: 20),
           ),
           const SizedBox(width: 16),
           Expanded(

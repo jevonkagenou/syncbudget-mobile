@@ -8,10 +8,25 @@ class BudgetTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(LucideIcons.arrowLeft, color: AppColors.neutral),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          'Pagu Anggaran',
+          style: AppTextStyles.headlineSmall,
+        ),
+        centerTitle: false,
+      ),
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
           // Header
           Padding(
             padding: const EdgeInsets.all(24.0),
@@ -205,7 +220,8 @@ class BudgetTab extends StatelessWidget {
               ),
             ),
           ),
-        ],
+          ],
+        ),
       ),
     );
   }

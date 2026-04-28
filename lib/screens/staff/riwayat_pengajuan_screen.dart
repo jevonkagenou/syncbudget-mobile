@@ -3,141 +3,167 @@ import 'package:intl/intl.dart';
 import '../../theme/colors.dart';
 import '../../theme/text_styles.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import '../../services/reimbursement_service.dart';
+import '../../utils/snackbar_utils.dart';
 
 class RiwayatPengajuanScreen extends StatefulWidget {
-  final List<Map<String, dynamic>> riwayatData;
-
-  const RiwayatPengajuanScreen({super.key, required this.riwayatData});
+  const RiwayatPengajuanScreen({super.key});
 
   @override
   State<RiwayatPengajuanScreen> createState() => _RiwayatPengajuanScreenState();
 }
 
 class _RiwayatPengajuanScreenState extends State<RiwayatPengajuanScreen> {
-  String _searchQuery = "";
-  String _selectedStatus = "Semua Status";
-  final List<String> _statusOptions = [
-    "Semua Status",
-    "PENDING",
-    "DISETUJUI",
-    "DITOLAK"
-  ];
+  bool _isLoading = true;
+  List<Map<String, dynamic>> _allData = [];
+  String _searchQuery = '';
+  String _selectedStatus = 'Semua Status';
+  final List<String> _statusOptions = ['Semua Status', 'PENDING', 'DISETUJUI', 'DITOLAK'];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    setState(() => _isLoading = true);
+
+    final result = await ReimbursementService.getMyReimbursements();
+    if (!mounted) return;
+
+    if (result['success']) {
+      final List rawList = result['data'] ?? [];
+      _allData = rawList.map<Map<String, dynamic>>((item) {
+        String statusStr = item['status'] ?? 'pending';
+        String formattedStatus = 'PENDING';
+        Color statusColor = AppColors.warning;
+        if (statusStr == 'approved') {
+          formattedStatus = 'DISETUJUI';
+          statusColor = AppColors.success;
+        } else if (statusStr == 'rejected') {
+          formattedStatus = 'DITOLAK';
+          statusColor = AppColors.danger;
+        }
+
+        String dateStr = item['created_at'] != null
+            ? DateFormat('dd MMM yyyy').format(DateTime.parse(item['created_at']))
+            : '';
+
+        return {
+          'id': item['id']?.toString() ?? '',
+          'title': item['title'] ?? 'Pengajuan',
+          'date': dateStr,
+          'amount': double.parse(item['amount'].toString()).round(),
+          'rawStatus': statusStr,
+          'status': formattedStatus,
+          'statusColor': statusColor,
+          'rejection_reason': item['rejection_reason'],
+        };
+      }).toList();
+    } else {
+      SnackbarUtils.showModernSnackBar(context, result['message'] ?? 'Gagal memuat data', isError: true);
+    }
+
+    setState(() => _isLoading = false);
+  }
+
+  List<Map<String, dynamic>> get _filteredData {
+    return _allData.where((item) {
+      final matchesSearch = item['title'].toString().toLowerCase().contains(_searchQuery.toLowerCase());
+      final matchesStatus = _selectedStatus == 'Semua Status' || item['status'] == _selectedStatus;
+      return matchesSearch && matchesStatus;
+    }).toList();
+  }
 
   String _formatCurrency(int amount) {
     return NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(amount);
   }
 
-  IconData _getIconForStatus(String status) {
-    if (status == 'DISETUJUI') return LucideIcons.checkCircle;
-    if (status == 'DITOLAK') return LucideIcons.xCircle;
-    return LucideIcons.clock; // MENUNGGU
-  }
-
-  Color _getColorForStatus(String status) {
-    if (status == 'DISETUJUI') return AppColors.success;
-    if (status == 'DITOLAK') return AppColors.danger;
-    return AppColors.warning; // MENUNGGU
-  }
-
-  IconData _getActionIconForStatus(String status) {
-    if (status == 'DISETUJUI') return LucideIcons.lock;
-    if (status == 'DITOLAK') return LucideIcons.info;
-    return LucideIcons.trash2; // MENUNGGU
-  }
-
-  Color _getActionColorForStatus(String status) {
-    if (status == 'MENUNGGU') return AppColors.danger;
-    return AppColors.neutralLight;
-  }
-
-  void _showPenolakanDialog(BuildContext context) {
+  void _showPenolakanDialog(BuildContext context, String? reason) {
     showDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: AppColors.surface,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: Row(
-            children: [
-              Icon(LucideIcons.alertCircle, color: AppColors.danger),
-              const SizedBox(width: 8),
-              Text(
-                'Alasan Penolakan',
-                style: AppTextStyles.headlineSmall.copyWith(color: AppColors.danger),
-              ),
-            ],
-          ),
-          content: Text(
-            'Gunakan kendaraan operasional kantor yang sudah tersedia, tidak perlu sewa.',
-            style: AppTextStyles.bodyMedium,
-          ),
-          actions: [
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.surface,
-                foregroundColor: AppColors.neutral,
-                elevation: 0,
-                side: const BorderSide(color: AppColors.border),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              child: const Text('Tutup'),
-            ),
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            const Icon(LucideIcons.alertCircle, color: AppColors.danger),
+            const SizedBox(width: 8),
+            Text('Alasan Penolakan', style: AppTextStyles.headlineSmall.copyWith(color: AppColors.danger)),
           ],
-        );
-      },
+        ),
+        content: Text(reason ?? 'Tidak ada alasan yang diberikan.', style: AppTextStyles.bodyMedium),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.surface,
+              foregroundColor: AppColors.neutral,
+              elevation: 0,
+              side: const BorderSide(color: AppColors.border),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Text('Tutup'),
+          ),
+        ],
+      ),
     );
   }
 
-  void _showBatalDialog(BuildContext context) {
+  void _showBatalDialog(BuildContext context, String id) {
     showDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: AppColors.surface,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          contentPadding: const EdgeInsets.all(24),
-          title: Text(
-            'Apakah Anda yakin ingin membatalkan pengajuan ini?',
-            style: AppTextStyles.bodyMedium.copyWith(color: AppColors.neutral),
-            textAlign: TextAlign.center,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        contentPadding: const EdgeInsets.all(24),
+        title: Text(
+          'Apakah Anda yakin ingin membatalkan pengajuan ini?',
+          style: AppTextStyles.bodyMedium.copyWith(color: AppColors.neutral),
+          textAlign: TextAlign.center,
+        ),
+        actionsAlignment: MainAxisAlignment.center,
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.border,
+              foregroundColor: AppColors.neutral,
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Text('Batal'),
           ),
-          actionsAlignment: MainAxisAlignment.center,
-          actions: [
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.border, // Abu-abu terang (OK / Tutup)
-                foregroundColor: AppColors.neutral,
-                elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              child: const Text('Tutup'),
+          const SizedBox(width: 8),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final result = await ReimbursementService.destroy(id);
+              if (!mounted) return;
+              SnackbarUtils.showModernSnackBar(
+                context,
+                result['message'] ?? (result['success'] ? 'Berhasil dihapus' : 'Gagal menghapus'),
+                isError: !result['success'],
+              );
+              if (result['success']) _loadData();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.danger,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
-            const SizedBox(width: 8),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.danger, // Merah (Batal / Hapus)
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              child: const Text('Hapus Pengajuan'),
-            ),
-          ],
-        );
-      },
+            child: const Text('Hapus Pengajuan'),
+          ),
+        ],
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final filteredData = widget.riwayatData.where((item) {
-      final matchesSearch = item['title'].toString().toLowerCase().contains(_searchQuery.toLowerCase());
-      final matchesStatus = _selectedStatus == "Semua Status" || item['status'] == _selectedStatus.toUpperCase();
-      return matchesSearch && matchesStatus;
-    }).toList();
+    final filteredData = _filteredData;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -146,108 +172,98 @@ class _RiwayatPengajuanScreenState extends State<RiwayatPengajuanScreen> {
         backgroundColor: AppColors.surface,
         foregroundColor: AppColors.neutral,
         elevation: 0,
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Container(
-              color: AppColors.surface,
-              padding: const EdgeInsets.all(24.0),
-              child: Row(
-                children: [
-                  // Dropdown Filter
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: AppColors.border),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        value: _selectedStatus,
-                        icon: const Icon(LucideIcons.chevronDown, size: 16),
-                        style: AppTextStyles.labelMedium,
-                        items: _statusOptions.map((String val) {
-                          return DropdownMenuItem<String>(
-                            value: val,
-                            child: Text(val),
-                          );
-                        }).toList(),
-                        onChanged: (val) {
-                          if (val != null) {
-                            setState(() {
-                              _selectedStatus = val;
-                            });
-                          }
-                        },
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  // Search Bar
-                  Expanded(
-                    child: TextField(
-                      onChanged: (val) {
-                        setState(() {
-                          _searchQuery = val;
-                        });
-                      },
-                      style: AppTextStyles.bodyMedium,
-                      decoration: InputDecoration(
-                        hintText: 'Cari pengajuan...',
-                        hintStyle: AppTextStyles.labelMedium.copyWith(color: AppColors.neutralLight),
-                        prefixIcon: const Icon(LucideIcons.search, size: 16),
-                        contentPadding: const EdgeInsets.symmetric(vertical: 0),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: AppColors.border),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: AppColors.border),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: AppColors.primary),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.all(24),
-                physics: const BouncingScrollPhysics(),
-                itemCount: filteredData.length,
-                itemBuilder: (context, index) {
-                  final item = filteredData[index];
-                  return _buildHistoryItem(
-                    title: item['title'],
-                    date: item['date'],
-                    amount: _formatCurrency(item['amount']),
-                    status: item['status'],
-                  );
-                },
-              ),
-            ),
-          ],
+        leading: IconButton(
+          icon: const Icon(LucideIcons.arrowLeft),
+          onPressed: () => Navigator.pop(context),
         ),
       ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+          : Column(
+              children: [
+                // Filter bar
+                Container(
+                  color: AppColors.surface,
+                  padding: const EdgeInsets.all(24.0),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: AppColors.border),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: _selectedStatus,
+                            icon: const Icon(LucideIcons.chevronDown, size: 16),
+                            style: AppTextStyles.labelMedium,
+                            items: _statusOptions.map((String val) {
+                              return DropdownMenuItem<String>(value: val, child: Text(val));
+                            }).toList(),
+                            onChanged: (val) {
+                              if (val != null) setState(() => _selectedStatus = val);
+                            },
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: TextField(
+                          onChanged: (val) => setState(() => _searchQuery = val),
+                          style: AppTextStyles.bodyMedium,
+                          decoration: InputDecoration(
+                            hintText: 'Cari pengajuan...',
+                            hintStyle: AppTextStyles.labelMedium.copyWith(color: AppColors.neutralLight),
+                            prefixIcon: const Icon(LucideIcons.search, size: 16),
+                            contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.border)),
+                            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.border)),
+                            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.primary)),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: RefreshIndicator(
+                    onRefresh: _loadData,
+                    color: AppColors.primary,
+                    child: filteredData.isEmpty
+                        ? ListView(
+                            children: [
+                              SizedBox(
+                                height: MediaQuery.of(context).size.height * 0.4,
+                                child: Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(LucideIcons.inbox, color: AppColors.neutralLight, size: 48),
+                                      const SizedBox(height: 16),
+                                      Text('Tidak ada data ditemukan', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.neutralLight)),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          )
+                        : ListView.builder(
+                            padding: const EdgeInsets.all(24),
+                            physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                            itemCount: filteredData.length,
+                            itemBuilder: (context, index) => _buildHistoryItem(filteredData[index]),
+                          ),
+                  ),
+                ),
+              ],
+            ),
     );
   }
 
-  Widget _buildHistoryItem({
-    required String title,
-    required String date,
-    required String amount,
-    required String status,
-  }) {
-    final statusColor = _getColorForStatus(status);
-    final icon = _getIconForStatus(status);
-    final actionIcon = _getActionIconForStatus(status);
-    final actionColor = _getActionColorForStatus(status);
+  Widget _buildHistoryItem(Map<String, dynamic> item) {
+    final Color statusColor = item['statusColor'];
+    final String rawStatus = item['rawStatus'];
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -255,6 +271,7 @@ class _RiwayatPengajuanScreenState extends State<RiwayatPengajuanScreen> {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
+        border: Border(left: BorderSide(color: statusColor, width: 4)),
         boxShadow: [
           BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 8, offset: const Offset(0, 2)),
         ],
@@ -266,30 +283,20 @@ class _RiwayatPengajuanScreenState extends State<RiwayatPengajuanScreen> {
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: statusColor.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: statusColor, size: 20),
+            child: Icon(LucideIcons.fileText, color: statusColor, size: 20),
           ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  date,
-                  style: AppTextStyles.labelSmall.copyWith(
-                    color: AppColors.neutralLight,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  title,
-                  style: AppTextStyles.labelLarge,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 8),
+                if (item['date'] != null && item['date'].isNotEmpty)
+                  Text(item['date'], style: AppTextStyles.labelSmall.copyWith(color: AppColors.neutralLight)),
+                const SizedBox(height: 2),
+                Text(item['title'], style: AppTextStyles.labelLarge, maxLines: 2, overflow: TextOverflow.ellipsis),
+                const SizedBox(height: 6),
                 Row(
                   children: [
                     Container(
@@ -298,35 +305,34 @@ class _RiwayatPengajuanScreenState extends State<RiwayatPengajuanScreen> {
                         color: statusColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(4),
                       ),
-                      child: Text(
-                        status,
-                        style: AppTextStyles.labelSmall.copyWith(
-                          color: statusColor,
-                          fontSize: 10,
-                        ),
-                      ),
+                      child: Text(item['status'], style: AppTextStyles.labelSmall.copyWith(color: statusColor, fontSize: 9)),
                     ),
                     const SizedBox(width: 8),
-                    Text(
-                      amount,
-                      style: AppTextStyles.labelMedium,
-                    ),
+                    Text(_formatCurrency(item['amount']), style: AppTextStyles.labelMedium),
                   ],
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 8),
-          IconButton(
-            onPressed: () {
-              if (status == 'DITOLAK') {
-                _showPenolakanDialog(context);
-              } else if (status == 'MENUNGGU') {
-                _showBatalDialog(context);
-              }
-            },
-            icon: Icon(actionIcon, color: actionColor, size: 20),
-          ),
+          const SizedBox(width: 4),
+          if (rawStatus == 'pending')
+            IconButton(
+              onPressed: () => _showBatalDialog(context, item['id']),
+              icon: const Icon(LucideIcons.trash2, color: AppColors.danger, size: 20),
+              tooltip: 'Batalkan',
+            )
+          else if (rawStatus == 'rejected')
+            IconButton(
+              onPressed: () => _showPenolakanDialog(context, item['rejection_reason']),
+              icon: const Icon(LucideIcons.info, color: AppColors.neutralLight, size: 20),
+              tooltip: 'Lihat alasan',
+            )
+          else
+            IconButton(
+              onPressed: () {},
+              icon: const Icon(LucideIcons.lock, color: AppColors.neutralLight, size: 20),
+              tooltip: 'Sudah diproses',
+            ),
         ],
       ),
     );

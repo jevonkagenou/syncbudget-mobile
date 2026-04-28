@@ -206,9 +206,12 @@ class _ProfileTabState extends State<ProfileTab> {
           Expanded(
             child: _isLoading 
                 ? const Center(child: CircularProgressIndicator()) 
-                : SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                : RefreshIndicator(
+                    onRefresh: _loadUserData,
+                    color: AppColors.primary,
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
               child: Column(
                 children: [
                   // Profile Intro
@@ -335,6 +338,7 @@ class _ProfileTabState extends State<ProfileTab> {
                   ),
                   const SizedBox(height: 32),
                 ],
+              ),
               ),
             ),
           ),

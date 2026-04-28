@@ -4,9 +4,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../theme/colors.dart';
 import '../../theme/text_styles.dart';
 import 'tabs/home_tab.dart';
-import 'tabs/budget_tab.dart';
 import 'tabs/pengajuan_tab.dart';
-import 'tabs/log_tab.dart';
 import 'tabs/profile_tab.dart';
 import '../../services/auth_service.dart';
 import '../auth/login_screen.dart';
@@ -38,19 +36,28 @@ class _ManagerMainScreenState extends State<ManagerMainScreen> {
     }
   }
 
-  final List<Widget> _screens = [
-    const HomeTab(),
-    const BudgetTab(),
-    const PengajuanTab(),
-    const LogTab(),
-    const ProfileTab(),
-  ];
+  void _changeTab(int index) {
+    setState(() {
+      _currentIndex = index;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    final List<Widget> tabs = [
+      HomeTab(
+        onNavigateToPengajuan: () => _changeTab(1),
+      ),
+      const PengajuanTab(),
+      const ProfileTab(),
+    ];
+
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: _screens[_currentIndex],
+      body: IndexedStack(
+        index: _currentIndex,
+        children: tabs,
+      ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: AppColors.surface,
@@ -64,7 +71,7 @@ class _ManagerMainScreenState extends State<ManagerMainScreen> {
         ),
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12),
             child: GNav(
               rippleColor: AppColors.primaryLight.withValues(alpha: 0.3),
               hoverColor: AppColors.primaryLight.withValues(alpha: 0.1),
@@ -75,43 +82,29 @@ class _ManagerMainScreenState extends State<ManagerMainScreen> {
               tabShadow: [BoxShadow(color: AppColors.primaryLight.withValues(alpha: 0.1), blurRadius: 8)],
               curve: Curves.fastOutSlowIn,
               duration: const Duration(milliseconds: 400),
-              gap: 6,
+              gap: 8,
               color: AppColors.neutralLight,
               activeColor: AppColors.primary,
-              iconSize: 22,
+              iconSize: 24,
               tabBackgroundColor: AppColors.primaryLight.withValues(alpha: 0.8),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
               selectedIndex: _currentIndex,
-              onTabChange: (index) {
-                setState(() {
-                  _currentIndex = index;
-                });
-              },
+              onTabChange: _changeTab,
               tabs: [
                 GButton(
                   icon: LucideIcons.home,
                   text: 'Beranda',
-                  textStyle: AppTextStyles.labelMedium.copyWith(color: AppColors.primary, fontSize: 11),
-                ),
-                GButton(
-                  icon: LucideIcons.wallet,
-                  text: 'Budget',
-                  textStyle: AppTextStyles.labelMedium.copyWith(color: AppColors.primary, fontSize: 11),
+                  textStyle: AppTextStyles.labelMedium.copyWith(color: AppColors.primary),
                 ),
                 GButton(
                   icon: LucideIcons.fileText,
                   text: 'Pengajuan',
-                  textStyle: AppTextStyles.labelMedium.copyWith(color: AppColors.primary, fontSize: 11),
-                ),
-                GButton(
-                  icon: LucideIcons.clipboardList,
-                  text: 'Log',
-                  textStyle: AppTextStyles.labelMedium.copyWith(color: AppColors.primary, fontSize: 11),
+                  textStyle: AppTextStyles.labelMedium.copyWith(color: AppColors.primary),
                 ),
                 GButton(
                   icon: LucideIcons.user,
                   text: 'Profil',
-                  textStyle: AppTextStyles.labelMedium.copyWith(color: AppColors.primary, fontSize: 11),
+                  textStyle: AppTextStyles.labelMedium.copyWith(color: AppColors.primary),
                 ),
               ],
             ),
