@@ -175,10 +175,11 @@ class _PengajuanTabState extends State<PengajuanTab> {
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(ctx);
+              final messenger = ScaffoldMessenger.of(context);
               final result = await ReimbursementService.destroy(id);
               if (!mounted) return;
-              SnackbarUtils.showModernSnackBar(
-                context,
+              SnackbarUtils.showModernSnackBarOnMessenger(
+                messenger,
                 result['message'] ?? (result['success'] ? 'Berhasil dihapus' : 'Gagal menghapus'),
                 isError: !result['success'],
               );
@@ -410,6 +411,8 @@ class _PengajuanTabState extends State<PengajuanTab> {
                                     }
 
                                     setModalState(() => isSubmitting = true);
+                                    final messenger = ScaffoldMessenger.of(context);
+                                    final nav = Navigator.of(ctx);
 
                                     final result = await ReimbursementService.store(
                                       budgetId: selectedBudgetId!,
@@ -424,8 +427,8 @@ class _PengajuanTabState extends State<PengajuanTab> {
                                     if (!mounted) return;
 
                                     if (result['success']) {
-                                      Navigator.pop(ctx);
-                                      SnackbarUtils.showModernSnackBar(context, result['message'] ?? 'Pengajuan berhasil dikirim');
+                                      nav.pop();
+                                      SnackbarUtils.showModernSnackBarOnMessenger(messenger, result['message'] ?? 'Pengajuan berhasil dikirim');
                                       _loadData();
                                     } else {
                                       setModalState(() => errorMessage = result['message'] ?? 'Gagal mengirim pengajuan');

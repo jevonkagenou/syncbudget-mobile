@@ -138,16 +138,16 @@ class _ProfileTabState extends State<ProfileTab> {
             ),
             ElevatedButton(
               onPressed: () async {
-                Navigator.pop(dialogContext); // Tutup dialog
+                Navigator.pop(dialogContext);
+                final nav = Navigator.of(context);
                 
                 // Panggil API logout dan hapus data lokal
                 await AuthService.logout();
                 
                 if (!mounted) return;
                 
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                nav.pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
                   (route) => false,
                 );
               },

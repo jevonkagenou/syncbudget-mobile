@@ -50,10 +50,10 @@ class _HomeTabState extends State<HomeTab> {
       userName = data['profile']['name'] ?? 'Manajer';
       userRole = (data['profile']['role'] ?? '').toString().toUpperCase();
       
-      // Parse Stats
-      sisaAnggaran = double.parse(data['stats']['total_budget_remaining'].toString()).round();
-      totalPengeluaran = double.parse(data['stats']['approved_this_month'].toString()).round();
-      pendingCount = data['stats']['pending_count'] ?? 0;
+      // Parse Stats (null-safe to prevent FormatException)
+      sisaAnggaran = double.tryParse(data['stats']?['total_budget_remaining']?.toString() ?? '0')?.round() ?? 0;
+      totalPengeluaran = double.tryParse(data['stats']?['approved_this_month']?.toString() ?? '0')?.round() ?? 0;
+      pendingCount = data['stats']?['pending_count'] ?? 0;
       
       // Parse Recent History
       List<Map<String, dynamic>> mappedHistory = [];

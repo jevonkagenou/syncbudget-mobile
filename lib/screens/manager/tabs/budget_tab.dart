@@ -241,6 +241,8 @@ class _BudgetTabState extends State<BudgetTab> {
                       if (endDate!.isBefore(startDate!)) { setDlg(() => errorMsg = 'Tanggal berakhir harus setelah tanggal mulai'); return; }
 
                       setDlg(() => isSubmitting = true);
+                      final messenger = ScaffoldMessenger.of(context);
+                      final nav = Navigator.of(ctx);
 
                       final Map<String, dynamic> result;
                       if (isEdit) {
@@ -270,8 +272,8 @@ class _BudgetTabState extends State<BudgetTab> {
 
                       if (!mounted) return;
                       if (result['success']) {
-                        Navigator.pop(ctx);
-                        SnackbarUtils.showModernSnackBar(context, result['message'] ?? 'Berhasil');
+                        nav.pop();
+                        SnackbarUtils.showModernSnackBarOnMessenger(messenger, result['message'] ?? 'Berhasil');
                         _loadBudgets();
                       } else {
                         setDlg(() => errorMsg = result['message'] ?? 'Gagal menyimpan');
