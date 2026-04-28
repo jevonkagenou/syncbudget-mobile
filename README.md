@@ -47,16 +47,18 @@ lib/
 │       ├── manager_main_screen.dart
 │       └── tabs/
 │           ├── home_tab.dart
-│           ├── budget_tab.dart
-│           ├── pengajuan_tab.dart
-│           ├── log_tab.dart
+│           ├── budget_tab.dart        ← Live API + CRUD form
+│           ├── pengajuan_tab.dart     ← Live API + Approve/Reject
+│           ├── log_tab.dart           ← Live API + detail modal
 │           └── profile_tab.dart
 ├── services/
 │   ├── api_config.dart
 │   ├── auth_service.dart
 │   ├── dashboard_service.dart
 │   ├── profile_service.dart
-│   └── reimbursement_service.dart
+│   ├── reimbursement_service.dart
+│   ├── budget_service.dart            ← CRUD + form metadata
+│   └── activity_log_service.dart      ← search + date filter
 ├── theme/
 │   ├── colors.dart
 │   └── text_styles.dart
@@ -119,19 +121,35 @@ static const String baseUrl = 'http://192.168.1.x:8000/api';
 
 ## Log Perubahan (Changelog)
 
-### [28 April 2026] - Staff Reimbursement Integration & API Sync Fixes
+---
+
+### [28 April 2026] — Manager Approval, Budget CRUD & Activity Log Full Integration
 
 **By:** @jevonkagenou
 
-- **Live API Integration (Staff Pengajuan):** Mengubah `pengajuan_tab.dart` dari *dummy data* ke API *real-time* via `ReimbursementService.store`. Form pengajuan kini sepenuhnya fungsional: memuat *dropdown* anggaran secara dinamis sesuai divisi pengguna (*Role-Based Security*), memverifikasi sisa nominal anggaran secara *real-time*, dan mendukung unggah *file receipt/nota* via integrasi paket `image_picker`.
-- **Validation UX Improvement:** Merubah cara validasi form ditampilkan dari `SnackBar` (yang tertutup oleh *bottom sheet*) menjadi *Inline Banner Alert* di dalam modal, sehingga *feedback* penolakan atau *error* bisa dilihat secara seketika tanpa menutup form pengajuan.
-- **Interactive History List:** Membangun ulang layar riwayat (*Lihat Semua*) menjadi `RiwayatPengajuanScreen` yang *self-fetching*. Memiliki filter status (*Pending, Approved, Rejected*) dan fitur pencarian (*Search*) di sisi *client* yang berkolaborasi dengan `RefreshIndicator` (*Pull-to-Refresh*).
-- **Reject & Delete Management:** Menambahkan fungsi "Hapus Pengajuan" (*Delete*) untuk status *Pending* (dilengkapi *Dialog Konfirmasi*) dan fitur inspeksi alasan penolakan pada status *Rejected* langsung dari UI aplikasi.
-- **Backend Sync (Laravel):**
-  - **DashboardController:** Memperbaiki logika *budget fetch* untuk `available_budgets` staf agar *strict* mengikuti Web App: harus dalam Tahun Anggaran aktif, masa berlaku belum kedaluwarsa, dan wajib memiliki sisa saldo (`total_amount > used_amount`).
-  - **ReimbursementController:** Menambah pengecekan `pendingAmount` (mencegah *phantom balance*) di fungsi `store` API, dan menyinkronkan tipe form `receipt` agar dapat mendukung *multipart/form-data* yang kompatibel antara ekosistem Flutter dan Blade (Web).
-  - **Blade Web (Reimbursement):** Menyempurnakan UX tombol *Delete* di antarmuka Web dengan membuang *native JS confirm* menjadi `Swal.fire` interaktif, serta memberikan proteksi akses `@hasrole('staff')` untuk mencegah manajer atau admin salah tekan.
-- **Profile Pull-to-Refresh:** Menambahkan pembungkus `RefreshIndicator` pada struktur dasar `profile_tab.dart` (Manager dan Staff), memberikan kemudahan *refresh* sinkronisasi nama dan *email* secara interaktif.
+#### Pengajuan Dana — Manager
+- **Live API Persetujuan (`pengajuan_tab.dart`):** Merombak total halaman pengajuan Manager dari data statis ke *live API* via endpoint baru `GET /api/reimbursements/manager`. Endpoint ini mengembalikan **semua status** (pending, approved, rejected) yang terbatas pada divisi yang dikelola manager, menggantikan endpoint `/pending` yang sebelumnya hanya mengambil status *pending*.
+- **Filter Status Chip:** Filter chip (Semua / MENUNGGU / DISETUJUI / DITOLAK) kini berfungsi penuh secara *client-side*. Kunci filter diselaraskan dengan nilai API mentah (`pending`, `approved`, `rejected`) menggunakan *label map* agar tetap tampil dalam Bahasa Indonesia.
+- **Backend Fix (`ReimbursementController`):** Menambahkan method `managerList()` baru yang menggunakan `whereHas('user', ...)` + relasi pivot `managedDivisions` untuk memfilter pengajuan secara aman per divisi manager, dengan dukungan *query param* `?status=` opsional.
+
+#### Pagu Anggaran — Manager
+- **Live API + CRUD Lengkap (`budget_tab.dart`):** Merombak total `BudgetTab` dari data statis ke *live API*. Mencakup: tampilan daftar dengan *search bar*, *pagination*, dan *progress bar* warna-adaptif (hijau → kuning → merah berdasarkan persentase pemakaian).
+- **Form Buat/Edit Anggaran:** Mengimplementasikan *bottom sheet modal* yang identik dengan form web, mencakup field: Nama Anggaran, Tahun Anggaran (dropdown), Kategori (dropdown), Divisi (dropdown), Total Pagu (angka saja), Tanggal Mulai & Berakhir (*date picker*). Validasi *inline error banner* ditampilkan langsung di dalam modal.
+- **Badge Kadaluarsa:** Menambahkan badge **"Kadaluarsa"** pada kartu anggaran yang `end_date`-nya sudah lewat dari tanggal hari ini. Periode tanggal juga diberi *strikethrough* sebagai penanda visual — selaras dengan tampilan web.
+- **Backend Fix (`BudgetController`):**
+  - Menambahkan endpoint `GET /budgets/form-metadata` yang mengembalikan data dropdown (`fiscal_years`, `divisions`, `budget_categories`) dalam satu request.
+  - Memperbaiki validasi duplikasi `fiscal_year_id`: dari `Rule::unique` (pesan error generik) menjadi pengecekan manual dengan pesan informatif: *"Anggaran dengan kombinasi Tahun Anggaran, Kategori, dan Divisi yang sama sudah ada."*
+
+#### Log Aktivitas — Manager
+- **Filter & Search (`log_tab.dart`):** Menambahkan *search bar* (cari aktivitas/pelaku) dan *date range picker* (Tanggal Mulai & Akhir) yang terhubung ke query param backend (`?search=`, `?start_date=`, `?end_date=`). Tombol *Reset Filter* muncul otomatis saat filter aktif.
+- **Modul Target Badge:** Badge modul kini berwarna dinamis per tipe entitas: Budget (hijau), User (biru), Reimbursement (kuning), Divisi (info), dsb — menggantikan badge teks abu polos sebelumnya.
+- **Modal Detail Perubahan (mobile-first):** Mengganti tampilan JSON *side-by-side* (yang tidak cocok di layar sempit) dengan desain *DraggableScrollableSheet* bertab:
+  - **Tab "Sebelum"** — menampilkan data lama dengan highlight merah pada field yang berubah
+  - **Tab "Sesudah"** — menampilkan data baru dengan highlight hijau pada field yang berubah
+  - Field yang berubah diurutkan ke **paling atas** secara otomatis
+  - Nama field diterjemahkan ke Bahasa Indonesia (`fiscal_year_id` → "ID Tahun Anggaran", dst) via *label map*
+  - Badge jumlah field yang berubah ditampilkan di header modal
+  - *Empty state* kontekstual jika data dibuat baru (tidak ada "sebelum") atau dihapus (tidak ada "sesudah")
 
 ---
 

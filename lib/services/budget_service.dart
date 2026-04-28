@@ -16,6 +16,26 @@ class BudgetService {
     };
   }
 
+  /// GET /budgets/form-metadata — Data dropdown untuk form anggaran
+  static Future<Map<String, dynamic>> getFormMetadata() async {
+    try {
+      final headers = await _getAuthHeaders();
+      if (headers == null) return {'success': false, 'message': 'Sesi tidak valid'};
+
+      final response = await http.get(
+        Uri.parse('${ApiConfig.baseUrl}/budgets/form-metadata'),
+        headers: headers,
+      );
+      final data = jsonDecode(response.body);
+      if (response.statusCode == 200 && data['success'] == true) {
+        return {'success': true, 'data': data['data']};
+      }
+      return {'success': false, 'message': data['message'] ?? 'Gagal memuat metadata'};
+    } catch (e) {
+      return {'success': false, 'message': 'Terjadi kesalahan koneksi'};
+    }
+  }
+
   /// GET /budgets — Daftar pagu anggaran (Manager, paginated, searchable)
   static Future<Map<String, dynamic>> getAll({
     String? search,

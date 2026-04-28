@@ -16,6 +16,44 @@ class ReimbursementService {
     };
   }
 
+  /// GET /reimbursements/manager — Semua pengajuan dalam divisi manager (semua status)
+  static Future<Map<String, dynamic>> getManagerReimbursements({String? status}) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      if (token == null) {
+        return {'success': false, 'message': 'Sesi tidak valid'};
+      }
+
+      final queryParams = <String, String>{};
+      if (status != null && status.isNotEmpty) {
+        queryParams['status'] = status;
+      }
+
+      final uri = Uri.parse('${ApiConfig.baseUrl}/reimbursements/manager')
+          .replace(queryParameters: queryParams.isNotEmpty ? queryParams : null);
+
+      final response = await http.get(
+        uri,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && data['success'] == true) {
+        return {'success': true, 'data': data['data']};
+      } else {
+        return {'success': false, 'message': data['message'] ?? 'Gagal memuat data pengajuan'};
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Terjadi kesalahan koneksi'};
+    }
+  }
+
   /// GET /reimbursements — Riwayat pengajuan milik user yang login
   static Future<Map<String, dynamic>> getMyReimbursements() async {
     try {
