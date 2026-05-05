@@ -18,12 +18,16 @@
 | Fitur | Staff | Manager |
 |-------|:-----:|:-------:|
 | Dasbor ringkasan anggaran real-time | Ya | Ya |
-| Pengajuan dana baru | Ya | - |
+| Pengajuan dana baru (+ struk wajib) | Ya | - |
 | Riwayat pengajuan personal | Ya | - |
+| Filter status pengajuan | Ya | Ya |
 | Persetujuan & penolakan pengajuan | - | Ya |
-| Monitoring anggaran per divisi | - | Ya |
+| Manajemen Pagu Anggaran (CRUD) | - | Ya |
+| Search & pagination pagu anggaran | - | Ya |
+| Log aktivitas + search + filter tanggal | - | Ya |
+| Arsip Laporan Tahunan + download | - | Ya |
+| Export PDF pengajuan disetujui | - | Ya |
 | Manajemen profil & keamanan akun | Ya | Ya |
-| Log aktivitas | - | Ya |
 | Pull-to-refresh data real-time | Ya | Ya |
 
 ---
@@ -41,15 +45,16 @@ lib/
 │   │   ├── riwayat_pengajuan_screen.dart
 │   │   └── tabs/
 │   │       ├── home_tab.dart
-│   │       ├── pengajuan_tab.dart
+│   │       ├── pengajuan_tab.dart       ← Upload struk wajib
 │   │       └── profile_tab.dart
 │   └── manager/
 │       ├── manager_main_screen.dart
 │       └── tabs/
-│           ├── home_tab.dart
-│           ├── budget_tab.dart        ← Live API + CRUD form
-│           ├── pengajuan_tab.dart     ← Live API + Approve/Reject
-│           ├── log_tab.dart           ← Live API + detail modal
+│           ├── home_tab.dart            ← Dashboard + Export PDF
+│           ├── budget_tab.dart          ← CRUD + search debounce
+│           ├── pengajuan_tab.dart       ← Approve/Reject
+│           ├── log_tab.dart             ← Real-time search + date filter
+│           ├── arsip_tab.dart           ← Laporan tahunan + download
 │           └── profile_tab.dart
 ├── services/
 │   ├── api_config.dart
@@ -57,13 +62,15 @@ lib/
 │   ├── dashboard_service.dart
 │   ├── profile_service.dart
 │   ├── reimbursement_service.dart
-│   ├── budget_service.dart            ← CRUD + form metadata
-│   └── activity_log_service.dart      ← search + date filter
+│   ├── budget_service.dart
+│   ├── activity_log_service.dart
+│   └── annual_report_service.dart
 ├── theme/
 │   ├── colors.dart
 │   └── text_styles.dart
 └── utils/
-    └── snackbar_utils.dart
+    ├── snackbar_utils.dart
+    └── file_download_utils.dart         ← PDF save ke public Downloads
 ```
 
 ---
@@ -112,14 +119,48 @@ static const String baseUrl = 'http://192.168.1.x:8000/api';
 |---------|----------|
 | `http` | HTTP client untuk komunikasi REST API |
 | `shared_preferences` | Penyimpanan token autentikasi lokal |
+| `path_provider` | Akses direktori penyimpanan perangkat untuk PDF |
 | `google_nav_bar` | Navigasi bawah bergaya modern dengan animasi |
 | `lucide_icons` | Library ikon konsisten lintas platform |
 | `intl` | Pemformatan mata uang Rupiah (`Rp`) |
-| `image_picker` | Mengakses galeri untuk unggah struk/nota pengajuan |
+| `image_picker` | Akses galeri untuk unggah struk/nota (wajib) |
 
 ---
 
 ## Log Perubahan (Changelog)
+
+---
+
+### [5 Mei 2026] — PDF Download, Validation Hardening & Bug Fixes
+
+**By:** @jevonkagenou
+
+#### Export PDF — Manager
+- **PDF Berhasil Tersimpan:** Memperbaiki masalah mendasar di mana file PDF tidak dapat ditemukan di file manager perangkat. Root cause: `Android/data/` diblokir oleh Android 11+ untuk akses pihak ketiga. Solusi: menyimpan langsung ke `/storage/emulated/0/Download/` (folder Downloads publik) yang dapat dilihat langsung di Files app.
+- **Rewrite `FileDownloadUtils`:** Implementasi strategi penyimpanan berlapis — public Downloads → external storage → app documents → cache (fallback terakhir). Snackbar kini menampilkan path file aktual bukan teks hardcoded.
+- **Hapus `open_file` Plugin:** Plugin ini memerlukan Developer Mode Windows untuk symlinks. Diganti dengan pendekatan direct file write yang lebih andal dan tidak bergantung native plugin tambahan.
+- **AndroidManifest:** Menambahkan `MANAGE_EXTERNAL_STORAGE` permission dan `android:requestLegacyExternalStorage="true"` agar akses ke public Downloads folder berfungsi di Android 11+.
+
+#### Arsip Laporan Tahunan — Manager (Baru)
+- **`arsip_tab.dart`:** Menambahkan tab baru Arsip Laporan Tahunan yang menampilkan daftar laporan dengan pagination, search bar, dan tombol download per laporan. File laporan diunduh langsung ke folder Downloads.
+
+#### Pagu Anggaran — Search Bug Fix
+- **Race Condition Debounce:** Memperbaiki bug di mana search bar memberikan hasil tidak konsisten saat mengetik cepat atau menekan clear. Penyebab: debounce menggunakan `_searchCtrl.text` yang sudah berubah saat timer fire. Solusi: `capturedValue` pattern.
+- **`_loadBudgets(search:)`:** Fungsi load sekarang menerima parameter `search` eksplisit.
+
+#### Log Aktivitas — Search Real-time
+- **`onChanged` + Debounce:** Mengganti `onSubmitted` dengan `onChanged` + debounce 400ms untuk pengalaman search real-time yang responsif.
+- **Clear Button Reaktif:** Tombol clear (×) dikendalikan variabel `_searchText` terpisah.
+
+#### Validasi API Backend (ebudgeting-core)
+- **`BudgetController::store()`:** Mengganti `$request->validate()` dengan `Validator::make()` — selalu mengembalikan JSON 422.
+- **`BudgetController::update()`:** Validasi dipindah ke **sebelum** pengecekan duplikasi. `fiscal_year_id` ditambahkan ke rules update.
+- **`ReimbursementController::store()`:** Konversi ke `Validator::make()` untuk konsistensi response JSON.
+- **`ProfileController::update()`:** Memperbaiki `$user->role` (tidak ada di Eloquent) menjadi `$user->roles->first()->name ?? 'staff'`.
+
+#### Struk/Nota — Sekarang Wajib
+- Backend: Field `receipt` diubah dari `nullable` menjadi `required`.
+- Mobile: Validasi client-side ditambahkan. Label upload: **"Bukti Struk / Nota (Wajib)"**.
 
 ---
 
@@ -195,11 +236,11 @@ static const String baseUrl = 'http://192.168.1.x:8000/api';
 **By:** @jevonkagenou
 
 - **Flutter Foundation Initialization:** Pembuatan struktur *project base* menggunakan framework Flutter untuk entitas *SyncBudget Mobile*.
-- **Slate Corporate Theme Implementation:** Integrasi palet warna khusus \"Slate\" (Primary `#696CFF`, Secondary `#6F71B1`, dst) beserta tipografi dinamis (*Manrope* untuk *Headline*, *Inter* untuk *Body*) demi menciptakan bahasa desain level *Enterprise SaaS*.
-- **Role-Based Auth Mockup:** Pembuatan sistem *logic gateway* (dummy) pada form *Login* untuk memisahkan pintu masuk antara pengguna dengan peran \"Staff\" dan \"Manager\".
+- **Slate Corporate Theme Implementation:** Integrasi palet warna khusus "Slate" (Primary `#696CFF`, Secondary `#6F71B1`, dst) beserta tipografi dinamis (*Manrope* untuk *Headline*, *Inter* untuk *Body*) demi menciptakan bahasa desain level *Enterprise SaaS*.
+- **Role-Based Auth Mockup:** Pembuatan sistem *logic gateway* (dummy) pada form *Login* untuk memisahkan pintu masuk antara pengguna dengan peran "Staff" dan "Manager".
 - **Staff Dashboard - Core Framework:** Implementasi fondasi navigasi utama (*Bottom Navigation Bar*) yang efisien.
-- **Home Tab Design Integration:** Merakit desain ringkasan dana (\"Total Dana Disetujui\"), visualisasi bar \"Ketersediaan Anggaran Divisi\", serta riwayat pengajuan awal.
-- **Fund Submission Gateway (Pengajuan Tab):** Menyusun antarmuka \"Daftar Pengajuan Dana\" dengan metrik berbasis *pill* dan riwayat komprehensif mengacu pada sistem ikon status persetujuan.
+- **Home Tab Design Integration:** Merakit desain ringkasan dana ("Total Dana Disetujui"), visualisasi bar "Ketersediaan Anggaran Divisi", serta riwayat pengajuan awal.
+- **Fund Submission Gateway (Pengajuan Tab):** Menyusun antarmuka "Daftar Pengajuan Dana" dengan metrik berbasis *pill* dan riwayat komprehensif mengacu pada sistem ikon status persetujuan.
 - **Secure Profile Form (Profile Tab):** Membangun form data ganda; blok identitas fungsional (*read-only* untuk info statis) dan kapsul Keamanan Akun bertema khusus untuk memperbarui kata sandi, dilengkapi *Routing Logout* terenkapsulasi secara UI.
 
 ---
