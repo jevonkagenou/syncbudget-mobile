@@ -21,6 +21,7 @@ class _BudgetTabState extends State<BudgetTab> {
   int _lastPage = 1;
   int _totalItems = 0;
   final _searchCtrl = TextEditingController();
+  String _searchText = '';
 
   // Form metadata
   List<dynamic> _fiscalYears = [];
@@ -42,6 +43,18 @@ class _BudgetTabState extends State<BudgetTab> {
     super.dispose();
   }
 
+  void _onSearchChanged(String value) {
+    setState(() => _searchText = value);
+    // Debounce: capture value at this moment, fire after 400ms idle
+    final capturedValue = value;
+    Future.delayed(const Duration(milliseconds: 400), () {
+      // Hanya fire jika user tidak mengetik lagi dan widget masih aktif
+      if (mounted && _searchCtrl.text == capturedValue) {
+        _loadBudgets(search: capturedValue);
+      }
+    });
+  }
+
   Future<void> _loadMetadata() async {
     final result = await BudgetService.getFormMetadata();
     if (result['success'] && mounted) {
@@ -54,9 +67,11 @@ class _BudgetTabState extends State<BudgetTab> {
     }
   }
 
-  Future<void> _loadBudgets({int page = 1}) async {
+  Future<void> _loadBudgets({int page = 1, String? search}) async {
+    // Gunakan parameter search jika ada, fallback ke controller text
+    final searchQuery = search ?? _searchCtrl.text.trim();
     setState(() => _isLoading = true);
-    final result = await BudgetService.getAll(search: _searchCtrl.text.trim(), page: page);
+    final result = await BudgetService.getAll(search: searchQuery, page: page);
     if (!mounted) return;
     if (result['success']) {
       final d = result['data'];
@@ -218,7 +233,13 @@ class _BudgetTabState extends State<BudgetTab> {
                   const SizedBox(width: 12),
                   Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     _label('Tanggal Berakhir *'),
-                    _datePicker(ctx, value: endDate, hint: 'dd-mm-yyyy', onPicked: (d) => setDlg(() => endDate = d)),
+                    _datePicker(
+                      ctx,
+                      value: endDate,
+                      hint: 'dd-mm-yyyy',
+                      minDate: DateTime.now().add(const Duration(days: 1)),
+                      onPicked: (d) => setDlg(() => endDate = d),
+                    ),
                   ])),
                 ]),
                 const SizedBox(height: 28),
@@ -235,9 +256,13 @@ class _BudgetTabState extends State<BudgetTab> {
                       if (selCategory == null) { setDlg(() => errorMsg = 'Pilih kategori'); return; }
                       if (selDivision == null) { setDlg(() => errorMsg = 'Pilih divisi'); return; }
                       final amt = double.tryParse(amountCtrl.text);
-                      if (amt == null || amt <= 0) { setDlg(() => errorMsg = 'Total pagu tidak valid'); return; }
+                      if (amt == null || amt < 1000000) { setDlg(() => errorMsg = 'Total pagu minimal Rp 1.000.000'); return; }
                       if (startDate == null) { setDlg(() => errorMsg = 'Pilih tanggal mulai'); return; }
                       if (endDate == null) { setDlg(() => errorMsg = 'Pilih tanggal berakhir'); return; }
+                      final tomorrow = DateTime.now().add(const Duration(days: 1));
+                      final tomorrowDate = DateTime(tomorrow.year, tomorrow.month, tomorrow.day);
+                      final endDateOnly = DateTime(endDate!.year, endDate!.month, endDate!.day);
+                      if (endDateOnly.isBefore(tomorrowDate)) { setDlg(() => errorMsg = 'Tanggal berakhir minimal besok (H+1)'); return; }
                       if (endDate!.isBefore(startDate!)) { setDlg(() => errorMsg = 'Tanggal berakhir harus setelah tanggal mulai'); return; }
 
                       setDlg(() => isSubmitting = true);
@@ -362,13 +387,20 @@ class _BudgetTabState extends State<BudgetTab> {
             child: TextField(
               controller: _searchCtrl,
               style: AppTextStyles.bodyMedium,
-              onSubmitted: (_) => _loadBudgets(),
+              onChanged: _onSearchChanged,
               decoration: InputDecoration(
                 hintText: 'Cari anggaran/divisi...',
                 hintStyle: AppTextStyles.labelSmall.copyWith(color: AppColors.neutralLight),
                 prefixIcon: const Icon(LucideIcons.search, size: 18, color: AppColors.neutralLight),
-                suffixIcon: _searchCtrl.text.isNotEmpty
-                    ? IconButton(icon: const Icon(LucideIcons.x, size: 16, color: AppColors.neutralLight), onPressed: () { _searchCtrl.clear(); _loadBudgets(); })
+                suffixIcon: _searchText.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(LucideIcons.x, size: 16, color: AppColors.neutralLight),
+                        onPressed: () {
+                          _searchCtrl.clear();
+                          setState(() => _searchText = '');
+                          _loadBudgets(search: '');
+                        },
+                      )
                     : null,
                 filled: true,
                 fillColor: AppColors.surface,
@@ -574,13 +606,14 @@ class _BudgetTabState extends State<BudgetTab> {
       dropdownColor: AppColors.surface,
     );
 
-  Widget _datePicker(BuildContext ctx, {DateTime? value, String hint = '', required ValueChanged<DateTime?> onPicked}) {
+  Widget _datePicker(BuildContext ctx, {DateTime? value, String hint = '', DateTime? minDate, required ValueChanged<DateTime?> onPicked}) {
+    final firstDate = minDate ?? DateTime(2020);
     return InkWell(
       onTap: () async {
         final picked = await showDatePicker(
           context: ctx,
-          initialDate: value ?? DateTime.now(),
-          firstDate: DateTime(2020),
+          initialDate: value != null && value.isAfter(firstDate) ? value : firstDate,
+          firstDate: firstDate,
           lastDate: DateTime(2030),
           builder: (ctx, child) => Theme(
             data: Theme.of(ctx).copyWith(colorScheme: const ColorScheme.light(primary: AppColors.primary)),

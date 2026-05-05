@@ -18,7 +18,7 @@ class SyncBudgetApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: AppColors.primary,
-          background: AppColors.background,
+          surface: AppColors.background,
         ),
         useMaterial3: true,
         textTheme: GoogleFonts.interTextTheme(

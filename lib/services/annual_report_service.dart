@@ -7,6 +7,8 @@ class AnnualReportService {
   /// GET /management/annual-reports — Daftar laporan tahunan (Manager, paginated)
   static Future<Map<String, dynamic>> getReports({
     int page = 1,
+    String? search,
+    String? fiscalYearId,
   }) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -16,8 +18,14 @@ class AnnualReportService {
         return {'success': false, 'message': 'Sesi tidak valid'};
       }
 
+      final params = <String, String>{'page': page.toString()};
+      if (search != null && search.isNotEmpty) params['search'] = search;
+      if (fiscalYearId != null && fiscalYearId.isNotEmpty) {
+        params['fiscal_year_id'] = fiscalYearId;
+      }
+
       final uri = Uri.parse('${ApiConfig.baseUrl}/management/annual-reports')
-          .replace(queryParameters: {'page': page.toString()});
+          .replace(queryParameters: params);
 
       final response = await http.get(
         uri,
@@ -50,7 +58,6 @@ class AnnualReportService {
   }
 
   /// GET /management/annual-reports/{id}/download — Download file laporan
-  /// Mengembalikan bytes file untuk disimpan ke storage
   static Future<Map<String, dynamic>> downloadReport(String id) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -69,7 +76,6 @@ class AnnualReportService {
       );
 
       if (response.statusCode == 200) {
-        // Ambil nama file dari Content-Disposition header jika ada
         String filename = 'laporan_$id.pdf';
         final contentDisposition = response.headers['content-disposition'];
         if (contentDisposition != null && contentDisposition.contains('filename=')) {
@@ -89,7 +95,6 @@ class AnnualReportService {
           'message': 'File berhasil diunduh',
         };
       } else {
-        // Coba parse error JSON
         String errorMessage = 'Gagal mengunduh file';
         try {
           final data = jsonDecode(response.body);

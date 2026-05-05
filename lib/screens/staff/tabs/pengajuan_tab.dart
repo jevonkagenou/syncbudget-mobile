@@ -307,8 +307,15 @@ class _PengajuanTabState extends State<PengajuanTab> {
                     ),
                     const SizedBox(height: 20),
 
-                    // Bukti Struk/Nota
-                    Text('Bukti Struk / Nota', style: AppTextStyles.labelSmall.copyWith(color: AppColors.neutral)),
+                    // Bukti Struk/Nota — WAJIB
+                    Text.rich(
+                      TextSpan(
+                        children: [
+                          TextSpan(text: 'Bukti Struk / Nota ', style: AppTextStyles.labelSmall.copyWith(color: AppColors.neutral)),
+                          TextSpan(text: '(Wajib)', style: AppTextStyles.labelSmall.copyWith(color: AppColors.danger)),
+                        ],
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     InkWell(
                       onTap: () async {
@@ -407,6 +414,10 @@ class _PengajuanTabState extends State<PengajuanTab> {
                                     }
                                     if (descCtrl.text.trim().isEmpty) {
                                       setModalState(() => errorMessage = 'Keterangan tidak boleh kosong');
+                                      return;
+                                    }
+                                    if (selectedReceipt == null) {
+                                      setModalState(() => errorMessage = 'Bukti struk/nota wajib diunggah');
                                       return;
                                     }
 

@@ -241,4 +241,57 @@ class BudgetService {
       };
     }
   }
+
+  /// GET /reimbursements/export/pdf — Export laporan PDF pengajuan disetujui (Manager)
+  static Future<Map<String, dynamic>> exportPdf({
+    String? startDate,
+    String? endDate,
+  }) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      if (token == null) return {'success': false, 'message': 'Sesi tidak valid'};
+
+      final params = <String, String>{};
+      if (startDate != null && startDate.isNotEmpty) params['start_date'] = startDate;
+      if (endDate != null && endDate.isNotEmpty) params['end_date'] = endDate;
+
+      final uri = Uri.parse('${ApiConfig.baseUrl}/reimbursements/export/pdf')
+          .replace(queryParameters: params.isNotEmpty ? params : null);
+
+      final response = await http.get(
+        uri,
+        headers: {
+          'Accept': 'application/pdf',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        String filename = 'LPJ_Reimbursement_${DateTime.now().millisecondsSinceEpoch}.pdf';
+        final contentDisposition = response.headers['content-disposition'];
+        if (contentDisposition != null && contentDisposition.contains('filename=')) {
+          final parts = contentDisposition.split('filename=');
+          if (parts.length > 1) {
+            filename = parts[1].replaceAll('"', '').replaceAll("'", '').trim();
+            if (filename.contains(';')) filename = filename.split(';').first.trim();
+          }
+        }
+        return {
+          'success': true,
+          'bytes': response.bodyBytes,
+          'filename': filename,
+        };
+      } else {
+        String errorMessage = 'Gagal mengekspor PDF';
+        try {
+          final data = jsonDecode(response.body);
+          errorMessage = data['message'] ?? errorMessage;
+        } catch (_) {}
+        return {'success': false, 'message': errorMessage};
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Terjadi kesalahan koneksi'};
+    }
+  }
 }

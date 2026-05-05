@@ -36,7 +36,6 @@ class DashboardService {
         };
       }
     } catch (e) {
-      print('API Error get dashboard: $e');
       return {
         'success': false,
         'message': 'Terjadi kesalahan koneksi',

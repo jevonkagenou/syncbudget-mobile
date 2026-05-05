@@ -20,6 +20,7 @@ class _LogTabState extends State<LogTab> {
   String? _errorMessage;
 
   final _searchCtrl = TextEditingController();
+  String _searchText = '';
   DateTime? _startDate;
   DateTime? _endDate;
 
@@ -33,6 +34,13 @@ class _LogTabState extends State<LogTab> {
   void dispose() {
     _searchCtrl.dispose();
     super.dispose();
+  }
+
+  void _onSearchChanged(String value) {
+    setState(() => _searchText = value);
+    Future.delayed(const Duration(milliseconds: 400), () {
+      if (_searchCtrl.text == value) _loadLogs();
+    });
   }
 
   Future<void> _loadLogs({int page = 1}) async {
@@ -473,13 +481,20 @@ class _LogTabState extends State<LogTab> {
                 TextField(
                   controller: _searchCtrl,
                   style: AppTextStyles.bodyMedium,
-                  onSubmitted: (_) => _loadLogs(),
+                  onChanged: _onSearchChanged,
                   decoration: InputDecoration(
                     hintText: 'Cari aktivitas/pelaku...',
                     hintStyle: AppTextStyles.labelSmall.copyWith(color: AppColors.neutralLight),
                     prefixIcon: const Icon(LucideIcons.search, size: 18, color: AppColors.neutralLight),
-                    suffixIcon: _searchCtrl.text.isNotEmpty
-                        ? IconButton(icon: const Icon(LucideIcons.x, size: 16, color: AppColors.neutralLight), onPressed: () { _searchCtrl.clear(); _loadLogs(); })
+                    suffixIcon: _searchText.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(LucideIcons.x, size: 16, color: AppColors.neutralLight),
+                            onPressed: () {
+                              _searchCtrl.clear();
+                              setState(() => _searchText = '');
+                              _loadLogs();
+                            },
+                          )
                         : null,
                     filled: true,
                     fillColor: AppColors.surface,

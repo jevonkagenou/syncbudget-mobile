@@ -40,7 +40,6 @@ class AuthService {
         };
       }
     } catch (e) {
-      print('API Error login: $e');
       return {
         'success': false,
         'message': 'Terjadi kesalahan koneksi. Pastikan server berjalan.',
@@ -75,7 +74,6 @@ class AuthService {
         return {'success': false, 'message': 'Gagal logout dari server'};
       }
     } catch (e) {
-      print('API Error logout: $e');
       // Clear locally even if API fails
       final prefs = await SharedPreferences.getInstance();
       await prefs.clear();

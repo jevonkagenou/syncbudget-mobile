@@ -86,7 +86,6 @@ class ProfileService {
         };
       }
     } catch (e) {
-      print('API Error update profile: $e');
       return {
         'success': false,
         'message': 'Terjadi kesalahan koneksi. Pastikan server berjalan.',

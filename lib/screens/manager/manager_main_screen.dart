@@ -30,34 +30,27 @@ class _ManagerMainScreenState extends State<ManagerMainScreen> {
     if (!loggedIn && mounted) {
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
         (route) => false,
       );
     }
   }
 
   void _changeTab(int index) {
-    setState(() {
-      _currentIndex = index;
-    });
+    setState(() => _currentIndex = index);
   }
 
   @override
   Widget build(BuildContext context) {
     final List<Widget> tabs = [
-      HomeTab(
-        onNavigateToPengajuan: () => _changeTab(1),
-      ),
+      HomeTab(onNavigateToPengajuan: () => _changeTab(1)),
       const PengajuanTab(),
       const ProfileTab(),
     ];
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: IndexedStack(
-        index: _currentIndex,
-        children: tabs,
-      ),
+      body: IndexedStack(index: _currentIndex, children: tabs),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: AppColors.surface,
@@ -66,7 +59,7 @@ class _ManagerMainScreenState extends State<ManagerMainScreen> {
               blurRadius: 16,
               color: Colors.black.withValues(alpha: 0.04),
               offset: const Offset(0, -4),
-            )
+            ),
           ],
         ),
         child: SafeArea(
@@ -76,10 +69,15 @@ class _ManagerMainScreenState extends State<ManagerMainScreen> {
               rippleColor: AppColors.primaryLight.withValues(alpha: 0.3),
               hoverColor: AppColors.primaryLight.withValues(alpha: 0.1),
               haptic: true,
-              tabBorderRadius: 24, 
-              tabActiveBorder: Border.all(color: Colors.transparent, width: 0), 
-              tabBorder: Border.all(color: Colors.transparent, width: 0), 
-              tabShadow: [BoxShadow(color: AppColors.primaryLight.withValues(alpha: 0.1), blurRadius: 8)],
+              tabBorderRadius: 24,
+              tabActiveBorder: Border.all(color: Colors.transparent, width: 0),
+              tabBorder: Border.all(color: Colors.transparent, width: 0),
+              tabShadow: [
+                BoxShadow(
+                  color: AppColors.primaryLight.withValues(alpha: 0.1),
+                  blurRadius: 8,
+                ),
+              ],
               curve: Curves.fastOutSlowIn,
               duration: const Duration(milliseconds: 400),
               gap: 8,

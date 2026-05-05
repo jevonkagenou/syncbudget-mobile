@@ -4,9 +4,12 @@ import 'package:intl/intl.dart';
 import '../../../theme/colors.dart';
 import '../../../theme/text_styles.dart';
 import '../../../services/dashboard_service.dart';
+import '../../../services/budget_service.dart';
 import '../../../utils/snackbar_utils.dart';
+import '../../../utils/file_download_utils.dart';
 import 'budget_tab.dart';
 import 'log_tab.dart';
+import 'arsip_tab.dart';
 
 class HomeTab extends StatefulWidget {
   final VoidCallback? onNavigateToPengajuan;
@@ -114,6 +117,185 @@ class _HomeTabState extends State<HomeTab> {
 
   void _navigateTo(Widget page) {
     Navigator.push(context, MaterialPageRoute(builder: (_) => page));
+  }
+
+  Future<void> _handleExportPdf() async {
+    DateTime? start;
+    DateTime? end;
+
+    // Show date filter bottom sheet — tunggu return value (true = user klik Generate)
+    final confirmed = await showModalBottomSheet<bool>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (sheetCtx) {
+        return StatefulBuilder(
+          builder: (sheetCtx, setSheet) => Container(
+            decoration: const BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(24),
+                topRight: Radius.circular(24),
+              ),
+            ),
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Export Laporan PDF', style: AppTextStyles.headlineSmall),
+                    IconButton(
+                      icon: const Icon(LucideIcons.x, size: 20),
+                      onPressed: () => Navigator.pop(sheetCtx, false),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Filter rentang tanggal persetujuan (opsional)',
+                  style: AppTextStyles.bodySmall.copyWith(color: AppColors.neutralLight),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _exportDatePicker(
+                        sheetCtx,
+                        label: 'Dari Tanggal',
+                        value: start,
+                        onPicked: (d) => setSheet(() => start = d),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _exportDatePicker(
+                        sheetCtx,
+                        label: 'Sampai Tanggal',
+                        value: end,
+                        onPicked: (d) => setSheet(() => end = d),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () => Navigator.pop(sheetCtx, true),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    icon: const Icon(LucideIcons.download, size: 16),
+                    label: const Text('Generate & Download PDF'),
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    // Hanya lanjut jika user memang klik tombol Generate
+    if (confirmed != true) return;
+    if (!mounted) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+
+    // Tampilkan loading snackbar
+    messenger.showSnackBar(
+      const SnackBar(
+        content: Row(
+          children: [
+            SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+            ),
+            SizedBox(width: 12),
+            Text('Sedang membuat PDF...'),
+          ],
+        ),
+        duration: Duration(seconds: 30),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+
+    final result = await BudgetService.exportPdf(
+      startDate: start != null ? DateFormat('yyyy-MM-dd').format(start!) : null,
+      endDate: end != null ? DateFormat('yyyy-MM-dd').format(end!) : null,
+    );
+
+    if (!mounted) return;
+    messenger.hideCurrentSnackBar();
+
+    if (result['success'] == true) {
+      final bytes = result['bytes'] as List<int>;
+      final filename = result['filename'] as String;
+      await FileDownloadUtils.saveAndOpen(
+        messenger: messenger,
+        bytes: bytes,
+        filename: filename,
+      );
+    } else {
+      SnackbarUtils.showModernSnackBarOnMessenger(
+        messenger,
+        result['message'] ?? 'Gagal mengekspor PDF',
+        isError: true,
+      );
+    }
+  }
+
+  Widget _exportDatePicker(
+    BuildContext ctx, {
+    required String label,
+    required DateTime? value,
+    required ValueChanged<DateTime?> onPicked,
+  }) {
+    return GestureDetector(
+      onTap: () async {
+        final picked = await showDatePicker(
+          context: ctx,
+          initialDate: value ?? DateTime.now(),
+          firstDate: DateTime(2020),
+          lastDate: DateTime(2030),
+        );
+        onPicked(picked);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+        decoration: BoxDecoration(
+          color: AppColors.background,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Row(
+          children: [
+            const Icon(LucideIcons.calendar, size: 16, color: AppColors.neutralLight),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                value != null
+                    ? DateFormat('dd/MM/yyyy').format(value)
+                    : label,
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: value != null ? AppColors.neutral : AppColors.neutralLight,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -256,7 +438,7 @@ class _HomeTabState extends State<HomeTab> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Menu Grid (2x2)
+                   // Menu Grid (2x2)
                   GridView.count(
                     crossAxisCount: 4,
                     shrinkWrap: true,
@@ -281,19 +463,13 @@ class _HomeTabState extends State<HomeTab> {
                         icon: LucideIcons.fileBarChart,
                         label: 'Laporan\nTahunan',
                         color: AppColors.success,
-                        onTap: () {
-                          // TODO: Navigasi ke halaman laporan tahunan
-                          SnackbarUtils.showModernSnackBar(context, 'Fitur segera hadir');
-                        },
+                        onTap: () => _navigateTo(const ArsipTab()),
                       ),
                       _buildMenuItem(
                         icon: LucideIcons.filePlus,
                         label: 'Export\nPDF',
                         color: AppColors.warning,
-                        onTap: () {
-                          // TODO: Navigasi ke halaman export PDF
-                          SnackbarUtils.showModernSnackBar(context, 'Fitur segera hadir');
-                        },
+                        onTap: _handleExportPdf,
                       ),
                     ],
                   ),

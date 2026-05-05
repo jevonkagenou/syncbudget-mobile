@@ -155,7 +155,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     Container(
                                       padding: const EdgeInsets.all(16),
                                       decoration: BoxDecoration(
-                                        color: AppColors.warningLight.withOpacity(0.5),
+                                        color: AppColors.warningLight.withValues(alpha: 0.5),
                                         shape: BoxShape.circle,
                                       ),
                                       child: const Icon(LucideIcons.alertTriangle, size: 32, color: AppColors.warning),
