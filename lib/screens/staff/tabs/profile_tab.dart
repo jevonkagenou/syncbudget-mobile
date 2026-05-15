@@ -195,10 +195,6 @@ class _ProfileTabState extends State<ProfileTab> {
                     ),
                   ],
                 ),
-                IconButton(
-                  onPressed: () {},
-                  icon: const Icon(LucideIcons.bell, color: AppColors.primary),
-                ),
               ],
             ),
           ),

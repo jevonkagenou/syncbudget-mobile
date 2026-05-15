@@ -560,10 +560,6 @@ class _PengajuanTabState extends State<PengajuanTab> {
                             ),
                           ],
                         ),
-                        IconButton(
-                          onPressed: () {},
-                          icon: const Icon(LucideIcons.bell, color: AppColors.primary),
-                        ),
                       ],
                     ),
                   ),

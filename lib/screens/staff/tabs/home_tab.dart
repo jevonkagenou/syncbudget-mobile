@@ -170,10 +170,6 @@ class _HomeTabState extends State<HomeTab> {
                     ),
                   ],
                 ),
-                IconButton(
-                  onPressed: () {},
-                  icon: const Icon(LucideIcons.bell, color: AppColors.primary),
-                ),
               ],
             ),
             const SizedBox(height: 24),
