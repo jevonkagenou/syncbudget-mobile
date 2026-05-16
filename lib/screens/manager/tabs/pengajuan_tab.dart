@@ -354,14 +354,6 @@ class _PengajuanTabState extends State<PengajuanTab> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('Persetujuan Dana', style: AppTextStyles.headlineMedium),
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryLight,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(LucideIcons.fileSignature, color: AppColors.primary, size: 20),
-                ),
               ],
             ),
           ),
