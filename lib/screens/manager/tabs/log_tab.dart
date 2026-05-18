@@ -15,6 +15,10 @@ class LogTab extends StatefulWidget {
 class _LogTabState extends State<LogTab> {
   bool _isLoading = true;
   List<dynamic> _logs = [];
+  List<dynamic> _allLogs = [];
+
+  bool _isSearchingAll = false;
+
   int _currentPage = 1;
   int _lastPage = 1;
   String? _errorMessage;
@@ -38,8 +42,28 @@ class _LogTabState extends State<LogTab> {
 
   void _onSearchChanged(String value) {
     setState(() => _searchText = value);
-    Future.delayed(const Duration(milliseconds: 400), () {
-      if (_searchCtrl.text == value) _loadLogs();
+
+    Future.delayed(const Duration(milliseconds: 400), () async {
+      if (_searchCtrl.text != value) return;
+
+      if (value.trim().isEmpty) {
+        _isSearchingAll = false;
+        _loadLogs(page: _currentPage);
+        return;
+      }
+
+      setState(() {
+        _isSearchingAll = true;
+        _isLoading = true;
+      });
+
+      await _loadAllLogs();
+
+      _filterLogs();
+
+      setState(() {
+        _isLoading = false;
+      });
     });
   }
 
@@ -51,27 +75,122 @@ class _LogTabState extends State<LogTab> {
 
     final result = await ActivityLogService.getLogs(
       page: page,
-      search: _searchCtrl.text.trim(),
-      startDate: _startDate != null ? DateFormat('yyyy-MM-dd').format(_startDate!) : null,
-      endDate: _endDate != null ? DateFormat('yyyy-MM-dd').format(_endDate!) : null,
+      startDate: _startDate != null
+          ? DateFormat('yyyy-MM-dd').format(_startDate!)
+          : null,
+      endDate: _endDate != null
+          ? DateFormat('yyyy-MM-dd').format(_endDate!)
+          : null,
     );
 
     if (!mounted) return;
 
-    if (result['success']) {
+   if (result['success']) {
       final data = result['data'];
+      final newLogs = data['data'] ?? [];
+
       setState(() {
-        _logs = data['data'] ?? [];
+        if (page == 1) {
+          _allLogs = List.from(newLogs);
+        } else {
+          for (var log in newLogs) {
+            final exists =
+                _allLogs.any((e) => e['id'] == log['id']);
+
+            if (!exists) {
+              _allLogs.add(log);
+            }
+          }
+        }
+
+        _logs = List.from(
+          _isSearchingAll ? _allLogs : _logs,
+        );
+
         _currentPage = data['current_page'] ?? 1;
         _lastPage = data['last_page'] ?? 1;
         _isLoading = false;
       });
-    } else {
+
+      _filterLogs();
+    }else {
       setState(() {
         _errorMessage = result['message'];
         _isLoading = false;
       });
     }
+  }
+
+  Future<void> _loadAllLogs() async {
+    _allLogs.clear();
+
+    int page = 1;
+    int lastPage = 1;
+
+    do {
+      final result = await ActivityLogService.getLogs(
+        page: page,
+        startDate: _startDate != null
+            ? DateFormat('yyyy-MM-dd').format(_startDate!)
+            : null,
+        endDate: _endDate != null
+            ? DateFormat('yyyy-MM-dd').format(_endDate!)
+            : null,
+      );
+
+      if (result['success']) {
+        final data = result['data'];
+
+        final List<dynamic> newLogs =
+            data['data'] ?? [];
+
+        for (var log in newLogs) {
+          final exists =
+              _allLogs.any((e) => e['id'] == log['id']);
+
+          if (!exists) {
+            _allLogs.add(log);
+          }
+        }
+
+        lastPage = data['last_page'] ?? 1;
+        page++;
+      } else {
+        break;
+      }
+    } while (page <= lastPage);
+  }
+
+  void _filterLogs() {
+    final query = _searchCtrl.text.toLowerCase().trim();
+
+    if (query.isEmpty) {
+        _isSearchingAll = false;
+        
+      setState(() {
+        _logs = List.from(_allLogs);
+      });
+      return;
+    }
+
+    final filtered = _allLogs.where((log) {
+      final description =
+          (log['description'] ?? '').toString().toLowerCase();
+
+      final causerName =
+          (log['causer']?['name'] ?? '').toString().toLowerCase();
+
+      final subjectType =
+          (log['subject_type'] ?? '').toString().toLowerCase();
+
+      return description.contains(query) ||
+          causerName.contains(query) ||
+          subjectType.contains(query);
+    }).toList();
+
+    setState(() {
+      _logs = filtered;
+    });
   }
 
   void _resetFilters() {
