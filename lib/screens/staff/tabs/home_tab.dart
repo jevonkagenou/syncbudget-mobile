@@ -139,175 +139,171 @@ class _HomeTabState extends State<HomeTab> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-            // Header
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 24,
-                      backgroundColor: AppColors.primaryLight,
-                      child: Icon(LucideIcons.user, color: AppColors.primary),
-                    ),
-                    const SizedBox(width: 12),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Hello, $userName',
-                          style: AppTextStyles.headlineSmall.copyWith(
-                            color: AppColors.primary,
-                          ),
-                        ),
-                        Text(
-                          userRole,
-                          style: AppTextStyles.labelSmall.copyWith(
-                            color: AppColors.neutralLight,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-
-            // Overview Cards
-            Row(
-              children: [
-                Expanded(
-                  child: _buildOverviewCard(
-                    icon: LucideIcons.clock,
-                    iconColor: AppColors.secondary,
-                    title: 'Pengajuanku(Menunggu)',
-                    value: '$totalPengajuanMenunggu',
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildOverviewCard(
-                    icon: LucideIcons.wallet,
-                    iconColor: AppColors.success,
-                    title: 'Total Dana(Disetujui)',
-                    value: _formatCurrency(totalDanaDisetujui),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-
-            // Budget Availability
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4)),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      Row(
                         children: [
-                          Text(
-                            'Ketersediaan Anggaran Divisi',
-                            style: AppTextStyles.labelLarge,
+                          CircleAvatar(
+                            radius: 24,
+                            backgroundColor: AppColors.primaryLight,
+                            child: Icon(LucideIcons.user, color: AppColors.primary),
                           ),
-                          Text(
-                            '$namaDivisi • TA $tahunAnggaran',
-                            style: AppTextStyles.labelSmall,
+                          const SizedBox(width: 12),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Hello, $userName',
+                                style: AppTextStyles.headlineSmall.copyWith(
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                              Text(
+                                userRole,
+                                style: AppTextStyles.labelSmall.copyWith(
+                                  color: AppColors.neutralLight,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                      Icon(LucideIcons.barChart2, color: AppColors.warning),
                     ],
                   ),
-                  const SizedBox(height: 16),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: LinearProgressIndicator(
-                      value: progressAnggaran,
-                      backgroundColor: AppColors.border,
-                      valueColor: const AlwaysStoppedAnimation<Color>(AppColors.warning),
-                      minHeight: 8,
+                  const SizedBox(height: 24),
+
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4)),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Ketersediaan Anggaran Divisi',
+                                  style: AppTextStyles.labelLarge,
+                                ),
+                                Text(
+                                  '$namaDivisi • TA $tahunAnggaran',
+                                  style: AppTextStyles.labelSmall,
+                                ),
+                              ],
+                            ),
+                            Icon(LucideIcons.barChart2, color: AppColors.warning),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: LinearProgressIndicator(
+                            value: progressAnggaran,
+                            backgroundColor: AppColors.border,
+                            valueColor: const AlwaysStoppedAnimation<Color>(AppColors.warning),
+                            minHeight: 8,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'SISA: ${_formatCurrency(sisaAnggaran).toUpperCase()}',
+                              style: AppTextStyles.labelMedium.copyWith(
+                                color: AppColors.warning,
+                              ),
+                            ),
+                            Text(
+                              'Total: ${_formatCurrency(totalAnggaran)}',
+                              style: AppTextStyles.labelSmall,
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 24),
+
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildOverviewCard(
+                          icon: LucideIcons.clock,
+                          iconColor: AppColors.secondary,
+                          title: 'Pengajuanku(Menunggu)',
+                          value: '$totalPengajuanMenunggu',
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _buildOverviewCard(
+                          icon: LucideIcons.wallet,
+                          iconColor: AppColors.success,
+                          title: 'Total Dana(Disetujui)',
+                          value: _formatCurrency(totalDanaDisetujui),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 32),
+
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'SISA: ${_formatCurrency(sisaAnggaran).toUpperCase()}',
-                        style: AppTextStyles.labelMedium.copyWith(
-                          color: AppColors.warning,
-                        ),
+                        'Riwayat Pengajuanku',
+                        style: AppTextStyles.headlineSmall,
                       ),
-                      Text(
-                        'Total: ${_formatCurrency(totalAnggaran)}',
-                        style: AppTextStyles.labelSmall,
+                      TextButton(
+                        onPressed: () {
+                          if (widget.onNavigateToPengajuan != null) {
+                            widget.onNavigateToPengajuan!();
+                          }
+                        },
+                        child: Text(
+                          'LIHAT SEMUA',
+                          style: AppTextStyles.labelSmall.copyWith(
+                            color: AppColors.primary,
+                          ),
+                        ),
                       ),
                     ],
                   ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 32),
-
-            // Recent Submissions
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Riwayat Pengajuanku',
-                  style: AppTextStyles.headlineSmall,
-                ),
-                TextButton(
-                  onPressed: () {
-                    if (widget.onNavigateToPengajuan != null) {
-                      widget.onNavigateToPengajuan!();
-                    }
-                  },
-                  child: Text(
-                    'LIHAT SEMUA',
-                    style: AppTextStyles.labelSmall.copyWith(
-                      color: AppColors.primary,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            
-            // Loop data riwayat dengan map
-            if (riwayatPengajuan.isEmpty)
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 32),
-                alignment: Alignment.center,
-                child: Text(
-                  'Belum ada riwayat pengajuan.',
-                  style: AppTextStyles.bodyMedium.copyWith(color: AppColors.neutralLight),
-                ),
-              )
-            else
-              ...riwayatPengajuan.map((item) {
-                return _buildHistoryItem(
-                  title: item['title'],
-                  date: item['date'],
-                  amount: _formatCurrency(item['amount']),
-                  status: item['status'],
-                  statusColor: item['statusColor'],
-                );
-              }),
-            
-            const SizedBox(height: 24),
+                  const SizedBox(height: 16),
+                  
+                  // 5. Daftar List Riwayat
+                  if (riwayatPengajuan.isEmpty)
+                    Container(
+                      padding: const EdgeInsets.symmetric(vertical: 32),
+                      alignment: Alignment.center,
+                      child: Text(
+                        'Belum ada riwayat pengajuan.',
+                        style: AppTextStyles.bodyMedium.copyWith(color: AppColors.neutralLight),
+                      ),
+                    )
+                  else
+                    ...riwayatPengajuan.map((item) {
+                      return _buildHistoryItem(
+                        title: item['title'],
+                        date: item['date'],
+                        amount: _formatCurrency(item['amount']),
+                        status: item['status'],
+                        statusColor: item['statusColor'],
+                      );
+                    }),
+                  
+                  const SizedBox(height: 24),
                 ],
               ),
             ),
