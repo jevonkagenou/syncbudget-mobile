@@ -127,7 +127,7 @@ static const String baseUrl = 'http://192.168.1.x:8000/api';
 
 ---
 
-## Log Perubahan (Changelog)### [19 Mei 2026] - Dashboard Optimization, Service Grid Redesign, and UI Alignment
+## [19 Mei 2026] - Dashboard Optimization, Service Grid Redesign, and UI Alignment
 
 ---
 
