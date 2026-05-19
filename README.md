@@ -127,7 +127,27 @@ static const String baseUrl = 'http://192.168.1.x:8000/api';
 
 ---
 
-## Log Perubahan (Changelog)
+## Log Perubahan (Changelog)### [19 Mei 2026] - Dashboard Optimization, Service Grid Redesign, and UI Alignment
+
+---
+
+**By:** @CitraAyu0
+
+- **Staff Dashboard Layout Refactoring:** Melakukan tata ulang struktural pada layout dashboard *Staff* untuk komponen kartu informasi anggaran dan ringkasan *overview* agar visualisasi data menjadi lebih seimbang.
+- **Manager Budget Card Refactoring:** Mengubah tata letak (*layouting*) pada kartu informasi anggaran di dashboard peran *Manager* guna mengoptimalkan hierarki informasi keuangan divisi.
+- **Service Menu Grid Redesign :** Merombak total menu *Layanan* pada beranda Manager dari komponen baris konvensional menjadi struktur *4-column grid layout* yang ringkas, hemat ruang, dan presisi tinggi sesuai target desain antarmuka.
+- **Filter Typography Realignment:** Memperbaiki (*bugfix*) penyimpangan visual pada halaman *Pengajuan* dengan meratakan teks tombol filter tepat ke posisi tengah (*center alignment*) demi konsistensi komponen UI.
+
+---
+
+## [19 Mei 2026] - UI Cleanup, Search Feature Enhancement, and Manager Page Simplification
+
+By: @iakmorales
+
+- **Global Header Simplification:** Menghapus icon notifikasi (bell icon) pada seluruh halaman aplikasi untuk menyederhanakan tampilan antarmuka serta menghilangkan elemen yang belum memiliki implementasi fungsional.
+- **Manager Approval Page Cleanup:** Menghapus icon action (edit/document icon) pada halaman Persetujuan Dana role Manager guna mengurangi distraksi visual dan menjaga konsistensi tindakan utama pada halaman approval.
+- **Budget Search Feature Enhancement:** Memperbaiki serta mengintegrasikan ulang mekanisme pencarian (search functionality) pada halaman Pagu Anggaran agar mampu melakukan filtering data secara optimal pada data ber-pagination.
+- **Activity Log Search Improvement:** Melakukan perbaikan fitur pencarian pada halaman Log Aktivitas dengan mengimplementasikan client-side search filtering untuk memastikan proses pencarian data tetap responsif meskipun menggunakan pagination.
 
 ---
 
@@ -242,31 +262,6 @@ static const String baseUrl = 'http://192.168.1.x:8000/api';
 - **Home Tab Design Integration:** Merakit desain ringkasan dana ("Total Dana Disetujui"), visualisasi bar "Ketersediaan Anggaran Divisi", serta riwayat pengajuan awal.
 - **Fund Submission Gateway (Pengajuan Tab):** Menyusun antarmuka "Daftar Pengajuan Dana" dengan metrik berbasis *pill* dan riwayat komprehensif mengacu pada sistem ikon status persetujuan.
 - **Secure Profile Form (Profile Tab):** Membangun form data ganda; blok identitas fungsional (*read-only* untuk info statis) dan kapsul Keamanan Akun bertema khusus untuk memperbarui kata sandi, dilengkapi *Routing Logout* terenkapsulasi secara UI.
-
----
-
-### [19 Mei 2026] - Dashboard Optimization, Service Grid Redesign, and UI Alignment
-
-**By:** @CitraAyu0
-
-- **Staff Dashboard Layout Refactoring:** Melakukan tata ulang struktural pada layout dashboard *Staff* untuk komponen kartu informasi anggaran dan ringkasan *overview* agar visualisasi data menjadi lebih seimbang.
-- **Manager Budget Card Refactoring:** Mengubah tata letak (*layouting*) pada kartu informasi anggaran di dashboard peran *Manager* guna mengoptimalkan hierarki informasi keuangan divisi.
-- **Service Menu Grid Redesign :** Merombak total menu *Layanan* pada beranda Manager dari komponen baris konvensional menjadi struktur *4-column grid layout* yang ringkas, hemat ruang, dan presisi tinggi sesuai target desain antarmuka.
-- **Filter Typography Realignment:** Memperbaiki (*bugfix*) penyimpangan visual pada halaman *Pengajuan* dengan meratakan teks tombol filter tepat ke posisi tengah (*center alignment*) demi konsistensi komponen UI.
-
----
-
-## [19 Mei 2026] - UI Cleanup, Search Feature Enhancement, and Manager Page Simplification
-
-By: @iakmorales
-
-- **Global Header Simplification:** Menghapus icon notifikasi (bell icon) pada seluruh halaman aplikasi untuk menyederhanakan tampilan antarmuka serta menghilangkan elemen yang belum memiliki implementasi fungsional.
-
-- **Manager Approval Page Cleanup:** Menghapus icon action (edit/document icon) pada halaman Persetujuan Dana role Manager guna mengurangi distraksi visual dan menjaga konsistensi tindakan utama pada halaman approval.
-
-- **Budget Search Feature Enhancement:** Memperbaiki serta mengintegrasikan ulang mekanisme pencarian (search functionality) pada halaman Pagu Anggaran agar mampu melakukan filtering data secara optimal pada data ber-pagination.
-
-- **Activity Log Search Improvement:** Melakukan perbaikan fitur pencarian pada halaman Log Aktivitas dengan mengimplementasikan client-side search filtering untuk memastikan proses pencarian data tetap responsif meskipun menggunakan pagination.
 
 ---
 
