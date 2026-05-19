@@ -375,6 +375,8 @@ class _PengajuanTabState extends State<PengajuanTab> {
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    // Tambahkan alignment center di sini agar teks otomatis berada di tengah kontainer
+                    alignment: Alignment.center, 
                     decoration: BoxDecoration(
                       color: isActive ? AppColors.primary : AppColors.surface,
                       borderRadius: BorderRadius.circular(20),
@@ -384,6 +386,7 @@ class _PengajuanTabState extends State<PengajuanTab> {
                     ),
                     child: Text(
                       _filterLabels[opt] ?? opt,
+                      textAlign: TextAlign.center, // Memastikan text rendering juga center
                       style: AppTextStyles.labelSmall.copyWith(
                         color: isActive ? Colors.white : AppColors.neutralLight,
                         fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
