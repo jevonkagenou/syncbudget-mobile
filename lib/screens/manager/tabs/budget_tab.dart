@@ -17,11 +17,14 @@ class BudgetTab extends StatefulWidget {
 class _BudgetTabState extends State<BudgetTab> {
   bool _isLoading = true;
   List<dynamic> _budgets = [];
+  List<dynamic> _allBudgets = [];
+
   int _currentPage = 1;
   int _lastPage = 1;
   int _totalItems = 0;
   final _searchCtrl = TextEditingController();
   String _searchText = '';
+  bool _isSearchingAll = false;
 
   // Form metadata
   List<dynamic> _fiscalYears = [];
@@ -45,14 +48,45 @@ class _BudgetTabState extends State<BudgetTab> {
 
   void _onSearchChanged(String value) {
     setState(() => _searchText = value);
-    // Debounce: capture value at this moment, fire after 400ms idle
+
     final capturedValue = value;
-    Future.delayed(const Duration(milliseconds: 400), () {
-      // Hanya fire jika user tidak mengetik lagi dan widget masih aktif
-      if (mounted && _searchCtrl.text == capturedValue) {
-        _loadBudgets(search: capturedValue);
-      }
-    });
+
+    Future.delayed(
+      const Duration(milliseconds: 400),
+      () async {
+
+        if (!mounted) return;
+
+        if (_searchCtrl.text != capturedValue) {
+          return;
+        }
+
+        // search kosong → balik pagination normal
+        if (capturedValue.trim().isEmpty) {
+
+          _isSearchingAll = false;
+
+          _loadBudgets(
+            page: _currentPage,
+          );
+
+          return;
+        }
+
+        setState(() {
+          _isLoading = true;
+          _isSearchingAll = true;
+        });
+
+        await _loadAllBudgets();
+
+        _filterBudgets();
+
+        setState(() {
+          _isLoading = false;
+        });
+      },
+    );
   }
 
   Future<void> _loadMetadata() async {
@@ -71,12 +105,33 @@ class _BudgetTabState extends State<BudgetTab> {
     // Gunakan parameter search jika ada, fallback ke controller text
     final searchQuery = search ?? _searchCtrl.text.trim();
     setState(() => _isLoading = true);
-    final result = await BudgetService.getAll(search: searchQuery, page: page);
+    final result = await BudgetService.getAll(page: page);
     if (!mounted) return;
     if (result['success']) {
       final d = result['data'];
+      final newBudgets = d['data'] ?? [];
+
       setState(() {
-        _budgets = d['data'] ?? [];
+
+        // normal pagination
+        _budgets = List.from(newBudgets);
+
+        // simpan semua yg pernah diload
+        if (page == 1) {
+          _allBudgets = List.from(newBudgets);
+        } else {
+          for (var budget in newBudgets) {
+
+            final exists = _allBudgets.any(
+              (e) => e['id'] == budget['id'],
+            );
+
+            if (!exists) {
+              _allBudgets.add(budget);
+            }
+          }
+        }
+
         _currentPage = d['current_page'] ?? 1;
         _lastPage = d['last_page'] ?? 1;
         _totalItems = d['total'] ?? 0;
@@ -87,6 +142,87 @@ class _BudgetTabState extends State<BudgetTab> {
     setState(() => _isLoading = false);
   }
 
+  Future<void> _loadAllBudgets() async {
+    _allBudgets.clear();
+
+    int page = 1;
+    int lastPage = 1;
+
+    do {
+
+      final result = await BudgetService.getAll(
+        page: page,
+      );
+
+      if (result['success']) {
+
+        final d = result['data'];
+
+        final List<dynamic> newBudgets =
+            d['data'] ?? [];
+
+        for (var budget in newBudgets) {
+
+          final exists = _allBudgets.any(
+            (e) => e['id'] == budget['id'],
+          );
+
+          if (!exists) {
+            _allBudgets.add(budget);
+          }
+        }
+
+        lastPage = d['last_page'] ?? 1;
+
+        page++;
+
+      } else {
+        break;
+      }
+
+    } while (page <= lastPage);
+  }
+
+  void _filterBudgets() {
+    final query =
+        _searchCtrl.text.toLowerCase().trim();
+
+    if (query.isEmpty) {
+
+      _isSearchingAll = false;
+
+      _loadBudgets(page: _currentPage);
+
+      return;
+    }
+
+    final filtered = _allBudgets.where((budget) {
+
+      final name =
+          (budget['name'] ?? '')
+              .toString()
+              .toLowerCase();
+
+      final division =
+          (budget['division']?['name'] ?? '')
+              .toString()
+              .toLowerCase();
+
+      final category =
+          (budget['budget_category']?['name'] ?? '')
+              .toString()
+              .toLowerCase();
+
+      return name.contains(query) ||
+          division.contains(query) ||
+          category.contains(query);
+
+    }).toList();
+
+    setState(() {
+      _budgets = filtered;
+    });
+  }
   Color _progressColor(double pct) {
     if (pct >= 0.9) return AppColors.danger;
     if (pct >= 0.7) return AppColors.warning;
