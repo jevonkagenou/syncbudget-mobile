@@ -805,25 +805,68 @@ class _LogTabState extends State<LogTab> {
   }
 
   Widget _buildPagination() {
-    if (_lastPage <= 1) return const SizedBox.shrink();
+    if (_logs.length <= 10) {
+      return const SizedBox.shrink();
+    }
+
+    if (_lastPage <= 1) {
+      return const SizedBox.shrink();
+    }
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      decoration: BoxDecoration(color: AppColors.surface, border: Border(top: BorderSide(color: AppColors.border))),
-      child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-        IconButton(
-          onPressed: _currentPage > 1 ? () => _loadLogs(page: _currentPage - 1) : null,
-          icon: Icon(LucideIcons.chevronLeft, color: _currentPage > 1 ? AppColors.primary : AppColors.neutralLight),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 20,
+        vertical: 10,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        border: Border(
+          top: BorderSide(color: AppColors.border),
         ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: BorderRadius.circular(8)),
-          child: Text('$_currentPage / $_lastPage', style: AppTextStyles.labelMedium.copyWith(color: AppColors.primary)),
-        ),
-        IconButton(
-          onPressed: _currentPage < _lastPage ? () => _loadLogs(page: _currentPage + 1) : null,
-          icon: Icon(LucideIcons.chevronRight, color: _currentPage < _lastPage ? AppColors.primary : AppColors.neutralLight),
-        ),
-      ]),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          IconButton(
+            onPressed: _currentPage > 1
+                ? () => _loadLogs(page: _currentPage - 1)
+                : null,
+            icon: Icon(
+              LucideIcons.chevronLeft,
+              color: _currentPage > 1
+                  ? AppColors.primary
+                  : AppColors.neutralLight,
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 8,
+            ),
+            decoration: BoxDecoration(
+              color: AppColors.primaryLight,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              '$_currentPage / $_lastPage',
+              style: AppTextStyles.labelMedium.copyWith(
+                color: AppColors.primary,
+              ),
+            ),
+          ),
+          IconButton(
+            onPressed: _currentPage < _lastPage
+                ? () => _loadLogs(page: _currentPage + 1)
+                : null,
+            icon: Icon(
+              LucideIcons.chevronRight,
+              color: _currentPage < _lastPage
+                  ? AppColors.primary
+                  : AppColors.neutralLight,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
