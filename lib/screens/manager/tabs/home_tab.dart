@@ -348,31 +348,7 @@ class _HomeTabState extends State<HomeTab> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Overview Cards
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildOverviewCard(
-                          icon: LucideIcons.checkSquare,
-                          iconColor: AppColors.warning,
-                          title: 'Persetujuan(Menunggu)',
-                          value: '$pendingCount',
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: _buildOverviewCard(
-                          icon: LucideIcons.trendingUp,
-                          iconColor: AppColors.success,
-                          title: 'Realisasi(Bulan Ini)',
-                          value: _formatCurrency(totalPengeluaran),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Sisa Anggaran Card
+                  // Sisa Anggaran Card (Sekarang di Atas)
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(20),
@@ -424,6 +400,30 @@ class _HomeTabState extends State<HomeTab> {
                         ),
                       ],
                     ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Overview Cards (Sekarang di Bawah Sisa Anggaran)
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildOverviewCard(
+                          icon: LucideIcons.checkSquare,
+                          iconColor: AppColors.warning,
+                          title: 'Persetujuan(Menunggu)',
+                          value: '$pendingCount',
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _buildOverviewCard(
+                          icon: LucideIcons.trendingUp,
+                          iconColor: AppColors.success,
+                          title: 'Realisasi(Bulan Ini)',
+                          value: _formatCurrency(totalPengeluaran),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 28),
 
