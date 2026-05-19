@@ -436,65 +436,73 @@ class _HomeTabState extends State<HomeTab> {
 
                    // Menu Grid (2x2)
                   GridView.count(
-                    crossAxisCount: 4,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    childAspectRatio: 0.85,
-                    children: [
-                      _buildMenuItem(
-                        icon: LucideIcons.wallet,
-                        label: 'Pagu\nAnggaran',
-                        color: AppColors.primary,
-                        onTap: () => _navigateTo(const BudgetTab()),
-                      ),
-                      _buildMenuItem(
-                        icon: LucideIcons.clipboardList,
-                        label: 'Log\nAktivitas',
-                        color: AppColors.info,
-                        onTap: () => _navigateTo(const LogTab()),
-                      ),
-                      _buildMenuItem(
-                        icon: LucideIcons.fileBarChart,
-                        label: 'Laporan\nTahunan',
-                        color: AppColors.success,
-                        onTap: () => _navigateTo(const ArsipTab()),
-                      ),
-                      _buildMenuItem(
-                        icon: LucideIcons.filePlus,
-                        label: 'Export\nPDF',
-                        color: AppColors.warning,
-                        onTap: _handleExportPdf,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 28),
+                      crossAxisCount: 4,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                      childAspectRatio: 0.85,
+                      children: [
+                        _buildMenuItem(
+                          icon: LucideIcons.wallet,
+                          label: 'Pagu\nAnggaran',
+                          color: AppColors.primary,
+                          bgColor: const Color(0xFFE8E4F8),
+                          textColor: const Color(0xFF4A4090),
+                          onTap: () => _navigateTo(const BudgetTab()),
+                        ),
+                        _buildMenuItem(
+                          icon: LucideIcons.clipboardList,
+                          label: 'Log\nAktivitas',
+                          color: const Color(0xFF2E8A5E),
+                          bgColor: const Color(0xFFD6F0E6),
+                          textColor: const Color(0xFF226648),
+                          onTap: () => _navigateTo(const LogTab()),
+                        ),
+                        _buildMenuItem(
+                          icon: LucideIcons.fileBarChart,
+                          label: 'Laporan\nTahunan',
+                          color: const Color(0xFF2E7A4E),
+                          bgColor: const Color(0xFFD4EEDA),
+                          textColor: const Color(0xFF1E5C38),
+                          onTap: () => _navigateTo(const ArsipTab()),
+                        ),
+                        _buildMenuItem(
+                          icon: LucideIcons.filePlus,
+                          label: 'Export\nPDF',
+                          color: const Color(0xFFB07020),
+                          bgColor: const Color(0xFFFDE8C4),
+                          textColor: const Color(0xFF7A4C10),
+                          onTap: _handleExportPdf,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 28),
 
-                  // Pengajuan Terbaru Section
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Pengajuan Terbaru',
-                        style: AppTextStyles.headlineSmall,
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          if (widget.onNavigateToPengajuan != null) {
-                            widget.onNavigateToPengajuan!();
-                          }
-                        },
-                        child: Text(
-                          'LIHAT SEMUA',
-                          style: AppTextStyles.labelSmall.copyWith(
-                            color: AppColors.primary,
+                    // Pengajuan Terbaru 
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Pengajuan Terbaru',
+                          style: AppTextStyles.headlineSmall,
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            if (widget.onNavigateToPengajuan != null) {
+                              widget.onNavigateToPengajuan!();
+                            }
+                          },
+                          child: Text(
+                            'LIHAT SEMUA',
+                            style: AppTextStyles.labelSmall.copyWith(
+                              color: AppColors.primary,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
 
                   // List of Reimbursements
                   if (riwayatPengajuan.isEmpty)
@@ -572,6 +580,8 @@ class _HomeTabState extends State<HomeTab> {
     required IconData icon,
     required String label,
     required Color color,
+    required Color bgColor,
+    required Color textColor,
     required VoidCallback onTap,
   }) {
     return InkWell(
@@ -579,28 +589,13 @@ class _HomeTabState extends State<HomeTab> {
       borderRadius: BorderRadius.circular(16),
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: bgColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.02),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: color, size: 22),
-            ),
+            Icon(icon, color: color, size: 22),
             const SizedBox(height: 8),
             Text(
               label,
@@ -608,6 +603,7 @@ class _HomeTabState extends State<HomeTab> {
               style: AppTextStyles.labelSmall.copyWith(
                 fontSize: 10,
                 height: 1.3,
+                color: textColor,
               ),
             ),
           ],
