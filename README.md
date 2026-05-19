@@ -245,6 +245,17 @@ static const String baseUrl = 'http://192.168.1.x:8000/api';
 
 ---
 
+### [19 Mei 2026] - Dashboard Optimization, Service Grid Redesign, and UI Alignment
+
+**By:** @CitraAyu0
+
+- **Staff Dashboard Layout Refactoring:** Melakukan tata ulang struktural pada layout dashboard *Staff* untuk komponen kartu informasi anggaran dan ringkasan *overview* agar visualisasi data menjadi lebih seimbang.
+- **Manager Budget Card Refactoring:** Mengubah tata letak (*layouting*) pada kartu informasi anggaran di dashboard peran *Manager* guna mengoptimalkan hierarki informasi keuangan divisi.
+- **Service Menu Grid Redesign :** Merombak total menu *Layanan* pada beranda Manager dari komponen baris konvensional menjadi struktur *4-column grid layout* yang ringkas, hemat ruang, dan presisi tinggi sesuai target desain antarmuka.
+- **Filter Typography Realignment:** Memperbaiki (*bugfix*) penyimpangan visual pada halaman *Pengajuan* dengan meratakan teks tombol filter tepat ke posisi tengah (*center alignment*) demi konsistensi komponen UI.
+
+---
+
 ## Kontributor
 
 | Kontributor | Peran |
