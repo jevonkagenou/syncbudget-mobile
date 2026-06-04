@@ -103,7 +103,7 @@ class _PengajuanTabState extends State<PengajuanTab> {
             'id': b['id']?.toString() ?? '',
             'name': b['name'] ?? '',
             'category': b['category'] ?? '',
-            'remaining': double.parse(b['remaining'].toString()).round(),
+            'remaining': (double.tryParse(b['remaining']?.toString() ?? '0') ?? 0).round(),
           }),
         );
       }
