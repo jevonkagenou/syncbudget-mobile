@@ -805,10 +805,6 @@ class _LogTabState extends State<LogTab> {
   }
 
   Widget _buildPagination() {
-    if (_logs.length <= 10) {
-      return const SizedBox.shrink();
-    }
-
     if (_lastPage <= 1) {
       return const SizedBox.shrink();
     }
