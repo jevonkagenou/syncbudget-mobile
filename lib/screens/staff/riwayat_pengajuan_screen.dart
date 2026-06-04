@@ -33,7 +33,10 @@ class _RiwayatPengajuanScreenState extends State<RiwayatPengajuanScreen> {
     if (!mounted) return;
 
     if (result['success']) {
-      final List rawList = result['data'] ?? [];
+      final rawData = result['data'];
+      final List rawList = (rawData is Map && rawData.containsKey('data'))
+          ? (rawData['data'] as List? ?? [])
+          : (rawData as List? ?? []);
       _allData = rawList.map<Map<String, dynamic>>((item) {
         String statusStr = item['status'] ?? 'pending';
         String formattedStatus = 'PENDING';
@@ -54,7 +57,7 @@ class _RiwayatPengajuanScreenState extends State<RiwayatPengajuanScreen> {
           'id': item['id']?.toString() ?? '',
           'title': item['title'] ?? 'Pengajuan',
           'date': dateStr,
-          'amount': double.parse(item['amount'].toString()).round(),
+          'amount': (double.tryParse(item['amount']?.toString() ?? '0') ?? 0).round(),
           'rawStatus': statusStr,
           'status': formattedStatus,
           'statusColor': statusColor,

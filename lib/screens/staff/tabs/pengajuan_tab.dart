@@ -42,7 +42,12 @@ class _PengajuanTabState extends State<PengajuanTab> {
     if (!mounted) return;
 
     if (reimbResult['success']) {
-      final List rawList = reimbResult['data'] ?? [];
+      // Handle both paginated (Laravel pagination) and plain array response
+      final rawData = reimbResult['data'];
+      final List rawList = (rawData is Map && rawData.containsKey('data'))
+          ? (rawData['data'] as List? ?? [])
+          : (rawData as List? ?? []);
+
       int totalAmount = 0;
       int pendingCount = 0;
 
@@ -51,7 +56,7 @@ class _PengajuanTabState extends State<PengajuanTab> {
         String statusStr = item['status'] ?? 'pending';
 
         if (statusStr == 'pending') pendingCount++;
-        totalAmount += double.parse(item['amount'].toString()).round();
+        totalAmount += (double.tryParse(item['amount']?.toString() ?? '0') ?? 0).round();
 
         String formattedStatus = 'PENDING';
         Color statusColor = AppColors.warning;
@@ -72,7 +77,7 @@ class _PengajuanTabState extends State<PengajuanTab> {
           'title': item['title'] ?? 'Pengajuan',
           'description': item['description'] ?? '',
           'date': dateStr,
-          'amount': double.parse(item['amount'].toString()).round(),
+          'amount': (double.tryParse(item['amount']?.toString() ?? '0') ?? 0).round(),
           'rawStatus': statusStr,
           'status': formattedStatus,
           'statusColor': statusColor,
